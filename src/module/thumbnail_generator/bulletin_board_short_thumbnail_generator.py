@@ -1,13 +1,18 @@
 import logging
 import os
 import random
-import textwrap
+import sys
 
 from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
 
 from .thumbnail_generator import IThumbnailGenerator as IThumbnailGenerator
 from .thumbnail_generator import Manuscript
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
+
+from util import tokenize  # noqa: E402
 
 load_dotenv()
 
@@ -63,14 +68,14 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
         draw = ImageDraw.Draw(background)
 
         # フォント設定
-        font_size_title = 200
+        font_size_title = 150
         font_title = ImageFont.truetype(FONT_PATH, font_size_title)
 
         # キャラクター画像を左下に配置
         image = (
             Image.open(image_path)
             .convert("RGBA")
-            .resize((int(width * 0.5), int(height * 0.5)))
+            .resize((int(width * 0.6), int(height * 0.5)))
         )
         char_x = 0
         char_y = height - image.height
@@ -79,7 +84,17 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
         background.alpha_composite(image, (char_x, char_y))
 
         # タイトルを描画
-        wrapped_titles = textwrap.wrap(title, width=width // font_size_title)
+        num_text_per_line = width // font_size_title
+        wrapped_titles = []
+        line = ""
+        for token in tokenize(title):
+            if len(line) + len(token) >= num_text_per_line:
+                wrapped_titles.append(line)
+                line = ""
+            line += token
+        if line:
+            wrapped_titles.append(line)
+        print(wrapped_titles)
 
         # 上から順に描画
         y = 40
@@ -108,7 +123,7 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
                 # blue
                 title_color = (0, 0, 128, 255)
             draw.text((x, y), wrapped_title, font=font_title, fill=title_color)
-            y += text_height
+            y += text_height + 40
 
         # 画像を保存または表示
         background.save(output_image_path)

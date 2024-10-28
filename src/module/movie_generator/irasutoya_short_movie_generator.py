@@ -87,28 +87,19 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
         # irasutoya_movie_generatorでは始めにoverviewを紹介する
         overview_detail = audio.overview_detail
         overview_wav_file_path = overview_detail.wav_file_path
+        thumbnail_image_path = os.path.join(
+            current_dir, "../../../output/", self.id, "thumbnail.png"
+        )
         with wave.open(overview_wav_file_path, "rb") as wav:
-            audio_duration = round(wav.getnframes() / wav.getframerate(), 2)
-            audio_clip = (
-                AudioFileClip(overview_wav_file_path)
-                .set_start(start_time)
-                .set_duration(audio_duration)
-                .fx(volumex, 1.0)
-            )
-            subtitle_clip = (
-                TextClip(
-                    manuscript.title,
-                    font=FONT_PATH,
-                    fontsize=50,
-                    color="black",
-                )
-                .set_position(("center", 1200))
+            audio_duration = 2.0
+            image_clip = (
+                ImageClip(thumbnail_image_path)
                 .set_start(start_time)
                 .set_duration(audio_duration)
             )
-            video_clip = [subtitle_clip]
+
+            video_clip = [image_clip]
             video_clips += video_clip
-            audio_clips.append(audio_clip)
             start_time += audio_duration
             total_duration += audio_duration
 
