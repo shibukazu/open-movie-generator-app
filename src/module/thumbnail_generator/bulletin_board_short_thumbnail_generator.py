@@ -63,7 +63,7 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
         draw = ImageDraw.Draw(background)
 
         # フォント設定
-        font_size_title = 100
+        font_size_title = 200
         font_title = ImageFont.truetype(FONT_PATH, font_size_title)
 
         # キャラクター画像を左下に配置
@@ -79,7 +79,7 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
         background.alpha_composite(image, (char_x, char_y))
 
         # タイトルを描画
-        wrapped_titles = textwrap.wrap(title, width=18)
+        wrapped_titles = textwrap.wrap(title, width=width // font_size_title)
 
         # 上から順に描画
         y = 40
