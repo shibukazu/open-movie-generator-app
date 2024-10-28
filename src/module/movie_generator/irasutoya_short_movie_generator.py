@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import random
 import wave
@@ -91,7 +92,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
             current_dir, "../../../output/", self.id, "thumbnail.png"
         )
         with wave.open(overview_wav_file_path, "rb") as wav:
-            audio_duration = 2.0
+            audio_duration = 3.0
             image_clip = (
                 ImageClip(thumbnail_image_path)
                 .set_start(start_time)
@@ -189,8 +190,10 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
                 )
                 image_clip = (
                     ImageClip(speaker_image_path)
+                    .set_position(
+                        lambda t: ("center", 300 + 50 * math.sin(2 * math.pi * t))
+                    )
                     .resize(height=900)
-                    .set_position(("center", 300))
                     .set_start(start_time)
                     .set_duration(audio_duration)
                 )
