@@ -1,0 +1,8 @@
+*.ipynb
+.env
+output/
+lib/
+material/
+.DS_Store
+*client_secrets.json
+__pycache__/
