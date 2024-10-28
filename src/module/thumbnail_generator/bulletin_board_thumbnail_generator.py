@@ -24,12 +24,24 @@ image_file_list = [
     for f in os.listdir(image_dir)
     if os.path.isfile(os.path.join(image_dir, f))
 ]
+if len(image_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内にいらすとや画像が見つかりません: {image_dir}"
+    )
 woman_image_file_list = [
     image_file for image_file in image_file_list if "_woman_" in image_file
 ]
+if len(woman_image_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内に女性の画像が必要です。なお、女性画像のファイル名には_woman_を含めてください。: {image_dir}"
+    )
 man_image_file_list = [
     image_file for image_file in image_file_list if "_man_" in image_file
 ]
+if len(man_image_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内に男性の画像が必要です。なお、男性画像のファイル名には_man_を含めてください。: {image_dir}"
+    )
 woman_image_path = random.choice(woman_image_file_list)
 man_image_path = random.choice(man_image_file_list)
 
@@ -39,6 +51,10 @@ background_file_list = [
     for f in os.listdir(background_dir)
     if os.path.isfile(os.path.join(background_dir, f))
 ]
+if len(background_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内に背景画像が見つかりません: {background_dir}"
+    )
 background_image_path = random.choice(background_file_list)
 
 
