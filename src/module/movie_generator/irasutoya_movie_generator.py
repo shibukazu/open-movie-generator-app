@@ -31,12 +31,18 @@ image_file_list = [
     for f in os.listdir(image_dir)
     if os.path.isfile(os.path.join(image_dir, f))
 ]
+if len(image_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内にいらすとや画像が見つかりません: {image_dir}"
+    )
 bgm_dir = os.path.join(current_dir, "../../../material/bgm")
 bgm_file_list = [
     os.path.join(bgm_dir, f)
     for f in os.listdir(bgm_dir)
     if os.path.isfile(os.path.join(bgm_dir, f))
 ]
+if len(bgm_file_list) == 0:
+    raise FileNotFoundError(f"次のディレクトリ内にBGMが見つかりません: {bgm_dir}")
 bgm_file_path = bgm_file_list[random.randint(0, len(bgm_file_list) - 1)]
 bgv_dir = os.path.join(current_dir, "../../../material/bgv")
 bgv_file_list = [
@@ -44,14 +50,24 @@ bgv_file_list = [
     for f in os.listdir(bgv_dir)
     if os.path.isfile(os.path.join(bgv_dir, f))
 ]
+if len(bgv_file_list) == 0:
+    raise FileNotFoundError(f"次のディレクトリ内に背景動画が見つかりません: {bgv_dir}")
 bgv_file_path = bgv_file_list[random.randint(0, len(bgv_file_list) - 1)]
 
 woman_speaker_image_file_list = [
     image_file for image_file in image_file_list if "_woman_" in image_file
 ]
+if len(woman_speaker_image_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内に女性の画像が必要です。なお、女性画像のファイル名には_woman_を含めてください。: {image_dir}"
+    )
 man_speaker_image_file_list = [
     image_file for image_file in image_file_list if "_man_" in image_file
 ]
+if len(man_speaker_image_file_list) == 0:
+    raise FileNotFoundError(
+        f"次のディレクトリ内に男性の画像が必要です。なお、男性画像のファイル名には_man_を含めてください。: {image_dir}"
+    )
 
 
 class IrasutoyaMovieGenerator(IMovieGenerator):
