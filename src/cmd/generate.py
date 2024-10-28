@@ -18,6 +18,7 @@ from module.manuscript_generator import (  # noqa: E402
 from module.movie_generator import (  # noqa: E402
     IMovieGenerator,
     IrasutoyaMovieGenerator,
+    IrasutoyaShortMovieGenerator,
 )
 from module.thumbnail_generator import (  # noqa: E402
     BulletinBoardThumbnailGenerator,
@@ -97,6 +98,8 @@ def bulletin(
     movie_generator: IMovieGenerator = None
     if movie_generator_type == "irasutoya":
         movie_generator = IrasutoyaMovieGenerator(id=id, logger=logger)
+    elif movie_generator_type == "irasutoya_short":
+        movie_generator = IrasutoyaShortMovieGenerator(id=id, logger=logger)
     else:
         raise NotImplementedError(
             f"Movie Generator Type {movie_generator_type} is not implemented"
@@ -176,6 +179,8 @@ def pseudo_bulletin(
     movie_generator: IMovieGenerator = None
     if movie_generator_type == "irasutoya":
         movie_generator = IrasutoyaMovieGenerator(id=id, logger=logger)
+    elif movie_generator_type == "irasutoya_short":
+        movie_generator = IrasutoyaShortMovieGenerator(id=id, logger=logger)
     else:
         raise NotImplementedError(
             f"Movie Generator Type {movie_generator_type} is not implemented"
