@@ -21,6 +21,7 @@ from module.movie_generator import (  # noqa: E402
     IrasutoyaShortMovieGenerator,
 )
 from module.thumbnail_generator import (  # noqa: E402
+    BulletinBoardShortThumbnailGenerator,
     BulletinBoardThumbnailGenerator,
     IThumbnailGenerator,
 )
@@ -39,6 +40,9 @@ def bulletin(
     url: str = typer.Argument(..., help="URL of the bulletin board"),
     audio_generator_type: str = typer.Option(
         "voicevox", help="Type of audio generator"
+    ),
+    thumbnail_generator_type: str = typer.Option(
+        "bulletin_board", help="Type of thumbnail generator"
     ),
     movie_generator_type: str = typer.Option(
         "irasutoya", help="Type of movie generator"
@@ -95,6 +99,12 @@ def bulletin(
             f"Audio Generator Type {audio_generator_type} is not implemented"
         )
 
+    thumbnail_generator: IThumbnailGenerator = None
+    if thumbnail_generator_type == "bulletin_board":
+        thumbnail_generator = BulletinBoardThumbnailGenerator(id=id, logger=logger)
+    elif thumbnail_generator_type == "bulletin_board_short":
+        thumbnail_generator = BulletinBoardShortThumbnailGenerator(id=id, logger=logger)
+
     movie_generator: IMovieGenerator = None
     if movie_generator_type == "irasutoya":
         movie_generator = IrasutoyaMovieGenerator(id=id, logger=logger)
@@ -105,13 +115,11 @@ def bulletin(
             f"Movie Generator Type {movie_generator_type} is not implemented"
         )
 
-    thumbnail_generator = BulletinBoardThumbnailGenerator(id=id, logger=logger)
-
     pipeline(
         manuscript_generator,
         audio_generator,
-        movie_generator,
         thumbnail_generator,
+        movie_generator,
         resume_step,
     )
 
@@ -122,6 +130,9 @@ def bulletin(
 def pseudo_bulletin(
     audio_generator_type: str = typer.Option(
         "voicevox", help="Type of audio generator"
+    ),
+    thumbnail_generator_type: str = typer.Option(
+        "bulletin_board", help="Type of thumbnail generator"
     ),
     movie_generator_type: str = typer.Option(
         "irasutoya", help="Type of movie generator"
@@ -176,6 +187,12 @@ def pseudo_bulletin(
             f"Audio Generator Type {audio_generator_type} is not implemented"
         )
 
+    thumbnail_generator: IThumbnailGenerator = None
+    if thumbnail_generator_type == "bulletin_board":
+        thumbnail_generator = BulletinBoardThumbnailGenerator(id=id, logger=logger)
+    elif thumbnail_generator_type == "bulletin_board_short":
+        thumbnail_generator = BulletinBoardShortThumbnailGenerator(id=id, logger=logger)
+
     movie_generator: IMovieGenerator = None
     if movie_generator_type == "irasutoya":
         movie_generator = IrasutoyaMovieGenerator(id=id, logger=logger)
@@ -186,13 +203,11 @@ def pseudo_bulletin(
             f"Movie Generator Type {movie_generator_type} is not implemented"
         )
 
-    thumbnail_generator = BulletinBoardThumbnailGenerator(id=id, logger=logger)
-
     pipeline(
         manuscript_generator,
         audio_generator,
-        movie_generator,
         thumbnail_generator,
+        movie_generator,
         resume_step,
     )
 
@@ -202,8 +217,8 @@ def pseudo_bulletin(
 def pipeline(
     manuscript_genetrator: IManuscriptGenerator,
     audio_generator: IAudioGenerator,
-    movie_generator: IMovieGenerator,
     thumbnail_generator: IThumbnailGenerator,
+    movie_generator: IMovieGenerator,
     resume_step: str | None = None,
 ) -> None:
     if not resume_step or resume_step == "manuscript":
@@ -224,23 +239,23 @@ def pipeline(
         not resume_step
         or resume_step == "manuscript"
         or resume_step == "audio"
-        or resume_step == "movie"
+        or resume_step == "thumbnail"
     ):
-        logger.info("Step3: Generate Movie")
-        movie_generator.generate(manuscript, audio)
+        logger.info("Step3: Generate Thumbnail")
+        thumbnail_generator.generate(manuscript)
     else:
-        logger.info("⏭️ Skip: Movie Generation")
-        movie_generator.skip()
+        logger.info("⏭️ Skip: Thumbnail Generation")
+        thumbnail_generator.skip()
 
     if (
         not resume_step
         or resume_step == "manuscript"
         or resume_step == "audio"
-        or resume_step == "movie"
         or resume_step == "thumbnail"
+        or resume_step == "movie"
     ):
-        logger.info("Step4: Generate Thumbnail")
-        thumbnail_generator.generate(manuscript)
+        logger.info("Step4: Generate Movie")
+        movie_generator.generate(manuscript, audio)
     else:
         logger.info("⏭️ Skip: Thumbnail Generation")
 

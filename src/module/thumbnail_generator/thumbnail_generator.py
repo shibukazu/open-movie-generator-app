@@ -18,3 +18,6 @@ class IThumbnailGenerator(metaclass=abc.ABCMeta):
         manuscript: Manuscript,
     ) -> None:
         pass
+
+    def skip(self) -> None:
+        pass
