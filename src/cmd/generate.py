@@ -23,6 +23,7 @@ from module.movie_generator import (  # noqa: E402
     IMovieGenerator,
     IrasutoyaMovieGenerator,
     IrasutoyaShortMovieGenerator,
+    TriviaShortMovieGenerator,
 )
 from module.thumbnail_generator import (  # noqa: E402
     BulletinBoardShortThumbnailGenerator,
@@ -254,7 +255,9 @@ def trivia(
         logger=logger,
     )
 
-    movie_generator: IMovieGenerator = None
+    movie_generator = TriviaShortMovieGenerator(
+        id=id, openai_apikey=OPENAI_API_KEY, logger=logger
+    )
 
     pipeline(
         manuscript_generator,

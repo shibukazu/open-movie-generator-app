@@ -53,12 +53,12 @@ class TriviaShortThumbnailGenerator(IThumbnailGenerator):
 
         # 背景画像を生成する
         # manuscriptのキーワードは一部がOpenAIのSafety Policyに抵触する可能性があるため、一度厳選する
-        completion = self.openai_client.beta.chat.completions.parse(
+        filter_response = self.openai_client.beta.chat.completions.parse(
             model="gpt-4o-2024-08-06",
             messages=[
                 {
                     "role": "system",
-                    "content": "作成している動画のキーワードが与えられます。このうち、DALL-Eを用いて動画のサムネイル画像を生成するにあたって有用かつDALL-Eの制約に抵触しないキーワードを抽出してください。",
+                    "content": "作成している動画のキーワードが与えられます。このうち、DALL-Eを用いて動画のサムネイル画像を生成するにあたって有用かつDALL-Eの制約に抵触しないキーワードを抽出してください。例えば個人名や不適切な単語が抵触するキーワードです。",
                 },
                 {
                     "role": "user",
@@ -68,13 +68,13 @@ class TriviaShortThumbnailGenerator(IThumbnailGenerator):
             response_format=Keywords,
         )
 
-        keywords = completion.choices[0].message.parsed
+        keywords = filter_response.choices[0].message.parsed
         if not keywords:
             raise ValueError(
                 "サムネイル画像生成に用いるキーワードの抽出に失敗しました。"
             )
 
-        openai_response = self.openai_client.images.generate(
+        image_generation_response = self.openai_client.images.generate(
             model="dall-e-3",
             prompt=f"{','.join(keywords.keywords)}",
             size="1024x1792",
@@ -82,10 +82,9 @@ class TriviaShortThumbnailGenerator(IThumbnailGenerator):
             n=1,
         )
 
-        background_image_url = openai_response.data[0].url
+        background_image_url = image_generation_response.data[0].url
         if background_image_url is None:
             raise ValueError("DALL-Eでのサムネイル背景画像生成に失敗しました。")
-        # ダウンロードして保存
         background_image_path = os.path.join(
             current_dir, "../../../output/", self.id, "original_background.png"
         )
@@ -124,7 +123,6 @@ class TriviaShortThumbnailGenerator(IThumbnailGenerator):
             line += token
         if line:
             wrapped_titles.append(line)
-        print(wrapped_titles)
 
         # 上から順に描画
         y = 40

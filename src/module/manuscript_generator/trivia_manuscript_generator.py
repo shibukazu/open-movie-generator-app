@@ -42,6 +42,10 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
                     "role": "system",
                     "content": "また、タイトルは15文字以内としてください。",
                 },
+                {
+                    "role": "system",
+                    "content": f"また、各トリビアは30文字以内とし、それより多い場合は分割してください。分割した上で{self.num_trivia}個に収まるようにしてください。",
+                },
             ],
             response_format=Manuscript,
         )
