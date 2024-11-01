@@ -11,6 +11,18 @@
 
 ## Example
 
+### ショート動画
+
+生成される動画の例
+
+<video src="https://github.com/user-attachments/assets/81256445-3a07-4481-a4dd-11516d59f733" width="500" height="300" controls></video>
+
+生成されるサムネイル画像の例
+
+<img src="https://github.com/user-attachments/assets/07f40bc4-8c9f-44b5-96da-04c638294016" width="270" height="480">
+
+### フル動画
+
 生成される動画の例（一部抜粋）
 
 <video src="https://github.com/user-attachments/assets/8f3b3ceb-7501-4f01-a16d-976371d93d46" width="500" height="300" controls></video>
@@ -29,18 +41,41 @@
 
 その後.env.template に基づき、.env ファイルを作成します。
 
+> [!NOTE]
+> 動画生成には各種リソースを各ユーザーごとに用意していただく必要があります。
+> 以下のリソースを用意してください。
+>
+> - 動画の BGM を material/movie/bgm に配置
+> - 動画の背景動画を material/movie/bgv に配置
+> - 動画で用いるキャラクター画像を material/movie/character に配置
+> - サムネイルで用いる背景画像を material/thumbnail/background に配置
+>
+> ※ キャラクター画像は \_man\_ もしくは \_woman\_ というキーワードを含むファイル名としてください
+
 ## Let's Try
 
-### 5ch スレッドから動画を生成する
+### 5ch スレッドからフル動画を生成する
 
 ```bash
 uv run src/cmd/main.py generate bulletin https://nova.5ch.net/test/read.cgi/livegalileo/1730087373/
 ```
 
-### GPT を用いた架空のスレッドから動画を生成する
+### 5ch スレッドからショート動画を生成する
 
 ```bash
-uv run src/cmd/main.py generate pseudo-bulletin
+uv run src/cmd/main.py generate bulletin https://nova.5ch.net/test/read.cgi/livegalileo/1730087373/ --movie-generator-type=irasutoya_short --thumbnail-generator-type=bulletin_board_short
+```
+
+### GPT を用いた架空のスレッドからフル動画を生成する
+
+```bash
+uv run src/cmd/main.py generate pseudo-bulletin モネ,睡蓮,印象派
+```
+
+### GPT を用いた架空のスレッドからショート動画を生成する
+
+```bash
+uv run src/cmd/main.py generate pseudo-bulletin モネ,睡蓮,印象派 --movie-generator-type=irasutoya_short --thumbnail-generator-type=bulletin_board_short
 ```
 
 ## Caution

@@ -25,30 +25,30 @@ FONT_PATH = os.getenv("FONT_PATH")
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-image_dir = os.path.join(current_dir, "../../../material/image/irasutoya")
+image_dir = os.path.join(current_dir, "../../../material/movie/character")
 image_file_list = [
     os.path.join(image_dir, f)
     for f in os.listdir(image_dir)
-    if os.path.isfile(os.path.join(image_dir, f))
+    if os.path.isfile(os.path.join(image_dir, f)) and f != ".gitkeep"
 ]
 if len(image_file_list) == 0:
     raise FileNotFoundError(
-        f"次のディレクトリ内にいらすとや画像が見つかりません: {image_dir}"
+        f"次のディレクトリ内にキャラクター画像が見つかりません: {image_dir}"
     )
-bgm_dir = os.path.join(current_dir, "../../../material/bgm")
+bgm_dir = os.path.join(current_dir, "../../../material/movie/bgm")
 bgm_file_list = [
     os.path.join(bgm_dir, f)
     for f in os.listdir(bgm_dir)
-    if os.path.isfile(os.path.join(bgm_dir, f))
+    if os.path.isfile(os.path.join(bgm_dir, f)) and f != ".gitkeep"
 ]
 if len(bgm_file_list) == 0:
     raise FileNotFoundError(f"次のディレクトリ内にBGMが見つかりません: {bgm_dir}")
 bgm_file_path = bgm_file_list[random.randint(0, len(bgm_file_list) - 1)]
-bgv_dir = os.path.join(current_dir, "../../../material/bgv")
+bgv_dir = os.path.join(current_dir, "../../../material/movie/bgv")
 bgv_file_list = [
     os.path.join(bgv_dir, f)
     for f in os.listdir(bgv_dir)
-    if os.path.isfile(os.path.join(bgv_dir, f))
+    if os.path.isfile(os.path.join(bgv_dir, f)) and f != ".gitkeep"
 ]
 if len(bgv_file_list) == 0:
     raise FileNotFoundError(f"次のディレクトリ内に背景動画が見つかりません: {bgv_dir}")

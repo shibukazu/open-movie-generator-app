@@ -18,15 +18,15 @@ FONT_PATH = os.getenv("FONT_PATH")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-image_dir = os.path.join(current_dir, "../../../material/image/irasutoya")
+image_dir = os.path.join(current_dir, "../../../material/movie/character")
 image_file_list = [
     os.path.join(image_dir, f)
     for f in os.listdir(image_dir)
-    if os.path.isfile(os.path.join(image_dir, f))
+    if os.path.isfile(os.path.join(image_dir, f)) and f != ".gitkeep"
 ]
 if len(image_file_list) == 0:
     raise FileNotFoundError(
-        f"次のディレクトリ内にいらすとや画像が見つかりません: {image_dir}"
+        f"次のディレクトリ内にキャラクター画像が見つかりません: {image_dir}"
     )
 woman_image_file_list = [
     image_file for image_file in image_file_list if "_woman_" in image_file
@@ -45,15 +45,15 @@ if len(man_image_file_list) == 0:
 woman_image_path = random.choice(woman_image_file_list)
 man_image_path = random.choice(man_image_file_list)
 
-background_dir = os.path.join(current_dir, "../../../material/image/background")
+background_dir = os.path.join(current_dir, "../../../material/thumbnail/background")
 background_file_list = [
     os.path.join(background_dir, f)
     for f in os.listdir(background_dir)
-    if os.path.isfile(os.path.join(background_dir, f))
+    if os.path.isfile(os.path.join(background_dir, f)) and f != ".gitkeep"
 ]
 if len(background_file_list) == 0:
     raise FileNotFoundError(
-        f"次のディレクトリ内に背景画像が見つかりません: {background_dir}"
+        f"次のディレクトリ内にサムネイルの背景画像が見つかりません: {background_dir}"
     )
 background_image_path = random.choice(background_file_list)
 
@@ -233,4 +233,4 @@ class BulletinBoardThumbnailGenerator(IThumbnailGenerator):
         # 画像を保存または表示
         background.save(output_image_path)
 
-        pass
+        self.logger.info(f"サムネイルを生成しました: {output_image_path}")
