@@ -141,7 +141,7 @@ class TriviaShortMovieGenerator(IMovieGenerator):
                             )
                             .set_start(start_time)
                             .set_duration(audio_duration)
-                            .set_position(("center", 1400 + line_height * i))
+                            .set_position(("center", 1500 + line_height * i))
                         )
                         subtitle_clips.append(subtitle_clip)
 
