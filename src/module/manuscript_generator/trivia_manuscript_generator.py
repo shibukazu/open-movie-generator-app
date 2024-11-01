@@ -44,7 +44,7 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
                 },
                 {
                     "role": "system",
-                    "content": f"また、各トリビアは30文字以内とし、それより多い場合は分割してください。分割した上で{self.num_trivia}個に収まるようにしてください。",
+                    "content": "また、各トリビアは50文字以内としてください。",
                 },
             ],
             response_format=Manuscript,
