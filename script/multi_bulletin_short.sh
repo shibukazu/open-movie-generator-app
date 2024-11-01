@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # 掲示板の内容に基づいた動画を自動的に複数個生成するスクリプト
 
 SCRIPT_DIR="$(cd "$(dirname "$0")"; pwd)"

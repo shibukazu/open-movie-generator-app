@@ -10,3 +10,5 @@ lib/
 __pycache__/
 upload_manager.json
 source_manager.json
+theme_manager.json
+resource/
