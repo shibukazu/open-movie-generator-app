@@ -21,23 +21,23 @@ FONT_PATH = os.getenv("FONT_PATH")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-image_dir = os.path.join(current_dir, "../../../material/image/irasutoya")
+image_dir = os.path.join(current_dir, "../../../material/movie/character")
 image_file_list = [
     os.path.join(image_dir, f)
     for f in os.listdir(image_dir)
-    if os.path.isfile(os.path.join(image_dir, f))
+    if os.path.isfile(os.path.join(image_dir, f)) and f != ".gitkeep"
 ]
 if len(image_file_list) == 0:
     raise FileNotFoundError(
-        f"次のディレクトリ内にいらすとや画像が見つかりません: {image_dir}"
+        f"次のディレクトリ内にキャラクター画像が見つかりません: {image_dir}"
     )
 image_path = random.choice(image_file_list)
 
-background_dir = os.path.join(current_dir, "../../../material/image/background")
+background_dir = os.path.join(current_dir, "../../../material/thumbnail/background")
 background_file_list = [
     os.path.join(background_dir, f)
     for f in os.listdir(background_dir)
-    if os.path.isfile(os.path.join(background_dir, f))
+    if os.path.isfile(os.path.join(background_dir, f)) and f != ".gitkeep"
 ]
 if len(background_file_list) == 0:
     raise FileNotFoundError(
@@ -53,6 +53,9 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
     def generate(self, manuscript: Manuscript) -> None:
         output_image_path = os.path.join(
             current_dir, "../../../output/", self.id, "thumbnail.png"
+        )
+        output_original_image_path = os.path.join(
+            current_dir, "../../../output/", self.id, "thumbnail_original.png"
         )
         os.makedirs(os.path.dirname(output_image_path), exist_ok=True)
         os.remove(output_image_path) if os.path.exists(output_image_path) else None
@@ -125,10 +128,9 @@ class BulletinBoardShortThumbnailGenerator(IThumbnailGenerator):
             draw.text((x, y), wrapped_title, font=font_title, fill=title_color)
             y += text_height + 40
 
-        # 画像を保存または表示
-        background = background.resize(
-            (540, 960), Image.ANTIALIAS
-        )  # 半分の解像度に変更
+        # 後続の動画生成で使えるようにオリジナルサイズの画像も保存する
+        background.save(output_original_image_path, quality=85)
+        # ショート動画のアップロード用にミニサイズを生成する
+        background = background.resize((540, 960), Image.ANTIALIAS)
         background.save(output_image_path, quality=85)
-
-        pass
+        self.logger.info(f"サムネイル画像を生成しました: {output_image_path}")
