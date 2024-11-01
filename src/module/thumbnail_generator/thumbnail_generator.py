@@ -26,6 +26,14 @@ class IThumbnailGenerator(metaclass=abc.ABCMeta):
         self.is_short = is_short
         self.resource_manager = ResourceManager()
         self.font_path = FONT_PATH
+        self.output_thumbnail_path = os.path.join(
+            current_dir, "../../../output", self.id, "thumbnail.png"
+        )
+        os.makedirs(os.path.dirname(self.output_thumbnail_path), exist_ok=True)
+        self.output_original_thumbnail_path = os.path.join(
+            current_dir, "../../../output", self.id, "thumbnail_original.png"
+        )
+        os.makedirs(os.path.dirname(self.output_original_thumbnail_path), exist_ok=True)
 
     @abc.abstractmethod
     def generate(

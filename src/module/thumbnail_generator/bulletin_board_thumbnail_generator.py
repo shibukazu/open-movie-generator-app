@@ -150,19 +150,6 @@ class BulletinBoardThumbnailGenerator(IThumbnailGenerator):
         return new_background
 
     def generate(self, manuscript: Manuscript) -> None:
-        output_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "thumbnail.png"
-        )
-        os.makedirs(os.path.dirname(output_image_path), exist_ok=True)
-        os.remove(output_image_path) if os.path.exists(output_image_path) else None
-        output_original_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "thumbnail_original.png"
-        )
-        os.makedirs(os.path.dirname(output_original_image_path), exist_ok=True)
-        os.remove(output_original_image_path) if os.path.exists(
-            output_original_image_path
-        ) else None
-
         background_image_path = self.resource_manager.random_background_image_path()
         character_image_path = self.resource_manager.random_character_image_path()
 
@@ -224,14 +211,14 @@ class BulletinBoardThumbnailGenerator(IThumbnailGenerator):
         )
 
         # 後続の動画生成で使えるようにオリジナルサイズの画像を保存する
-        background.save(output_original_image_path, quality=85)
+        background.save(self.output_original_thumbnail_path, quality=85)
         # ショート動画のアップロード用にミニサイズをサムネイルとして保存する
         background = background.resize((width // 2, height // 2), Image.ANTIALIAS)
-        background.save(output_image_path, quality=85)
+        background.save(self.output_thumbnail_path, quality=85)
 
         self.logger.info(
-            f"掲示板形式のサムネイルを生成しました　縮小版: {output_image_path}"
+            f"掲示板形式のサムネイルを生成しました　縮小版: {self.output_thumbnail_path}"
         )
         self.logger.info(
-            f"掲示板形式のサムネイルを生成しました　オリジナル版: {output_original_image_path}"
+            f"掲示板形式のサムネイルを生成しました　オリジナル版: {self.output_original_thumbnail_path}"
         )

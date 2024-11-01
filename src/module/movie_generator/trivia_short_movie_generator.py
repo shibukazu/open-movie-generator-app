@@ -1,11 +1,9 @@
 import logging
 import os
-import random
 import sys
 import wave
 from typing import List
 
-from dotenv import load_dotenv
 from moviepy.audio.fx.all import audio_loop, volumex
 from moviepy.editor import (
     AudioFileClip,
@@ -26,34 +24,20 @@ sys.path.append(parent_dir)
 
 from util import ImageGenerator, tokenize  # noqa: E402
 
-load_dotenv()
-
-FONT_PATH = os.getenv("FONT_PATH")
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
-bgm_dir = os.path.join(current_dir, "../../../material/movie/bgm")
-bgm_file_list = [
-    os.path.join(bgm_dir, f)
-    for f in os.listdir(bgm_dir)
-    if os.path.isfile(os.path.join(bgm_dir, f)) and f != ".gitkeep"
-]
-if len(bgm_file_list) == 0:
-    raise FileNotFoundError(f"次のディレクトリ内にBGMが見つかりません: {bgm_dir}")
-bgm_file_path = bgm_file_list[random.randint(0, len(bgm_file_list) - 1)]
 
 
 class TriviaShortMovieGenerator(IMovieGenerator):
-    def __init__(self, id: str, openai_apikey: str, logger: logging.Logger):
-        super().__init__(id, logger)
+    def __init__(
+        self, id: str, openai_apikey: str, is_short: bool, logger: logging.Logger
+    ):
+        super().__init__(id, is_short=is_short, logger=logger)
+        if not self.is_short:
+            raise ValueError("TriviaShortMovieGeneratorは短尺動画用です。")
         self.openai_client = OpenAI(api_key=openai_apikey)
-        self.output_movie_path = os.path.join(
-            current_dir, "../../../output", self.id, "movie.mp4"
-        )
         self.image_generator = ImageGenerator(
             openai_apikey=openai_apikey, logger=logger
         )
-        os.makedirs(os.path.dirname(self.output_movie_path), exist_ok=True)
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
         # 音声を順次結合し、それに合わせて動画を作成する
@@ -120,7 +104,7 @@ class TriviaShortMovieGenerator(IMovieGenerator):
                     subtitle_clip = (
                         TextClip(
                             content_transcript,
-                            font=FONT_PATH,
+                            font=self.font_path,
                             fontsize=50,
                             color="black",
                         )
@@ -135,7 +119,7 @@ class TriviaShortMovieGenerator(IMovieGenerator):
                         subtitle_clip = (
                             TextClip(
                                 subtext,
-                                font=FONT_PATH,
+                                font=self.font_path,
                                 fontsize=50,
                                 color="black",
                             )
@@ -165,7 +149,7 @@ class TriviaShortMovieGenerator(IMovieGenerator):
 
         # BGM
         bgm_clip = (
-            AudioFileClip(bgm_file_path)
+            AudioFileClip(self.resource_manager.random_bgm_path())
             .fx(audio_loop, duration=total_duration)
             .fx(volumex, 0.1)
         )

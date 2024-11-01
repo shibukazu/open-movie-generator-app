@@ -29,19 +29,6 @@ class DalleThumbnailGenerator(IThumbnailGenerator):
         )
 
     def generate(self, manuscript: Manuscript) -> None:
-        output_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "thumbnail.png"
-        )
-        os.makedirs(os.path.dirname(output_image_path), exist_ok=True)
-        os.remove(output_image_path) if os.path.exists(output_image_path) else None
-        output_original_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "thumbnail_original.png"
-        )
-        os.makedirs(os.path.dirname(output_original_image_path), exist_ok=True)
-        os.remove(output_original_image_path) if os.path.exists(
-            output_original_image_path
-        ) else None
-
         width: int
         height: int
         if self.is_short:
@@ -93,14 +80,14 @@ class DalleThumbnailGenerator(IThumbnailGenerator):
                 y_bottom += text_height + 10
 
         # 後続の動画生成で使えるようにオリジナルサイズの画像を保存する
-        canvas.save(output_original_image_path, quality=85)
+        canvas.save(self.output_original_thumbnail_path, quality=85)
         # ショート動画のアップロード用にミニサイズをサムネイルとして保存する
         canvas = canvas.resize((width // 2, height // 2), Image.ANTIALIAS)
-        canvas.save(output_image_path, quality=85)
+        canvas.save(self.output_thumbnail_path, quality=85)
 
         self.logger.info(
-            f"Dall-Eを用いてサムネイル画像を生成しました 縮小版: {output_image_path}"
+            f"Dall-Eを用いてサムネイル画像を生成しました 縮小版: {self.output_thumbnail_path}"
         )
         self.logger.info(
-            f"Dall-Eを用いてサムネイル画像を生成しました オリジナル版: {output_original_image_path}"
+            f"Dall-Eを用いてサムネイル画像を生成しました オリジナル版: {self.output_original_thumbnail_path}"
         )
