@@ -107,7 +107,7 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
                 },
                 {
                     "role": "system",
-                    "content": "動画のタイトルをYouTube形式で生成し、keywordsも5つ考えてください。",
+                    "content": "動画のタイトルは20文字以内で生成し、keywordsも5つ考えてください。",
                 },
                 {"role": "user", "content": json_raw_manuscript},
             ],
