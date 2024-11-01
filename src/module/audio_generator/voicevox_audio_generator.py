@@ -1,10 +1,10 @@
 import io
-import json
 import logging
 import os
 import wave
 from ctypes import CDLL
 from pathlib import Path
+from typing import TypedDict, Literal, List
 
 from dotenv import load_dotenv
 
@@ -34,26 +34,67 @@ from voicevox_core import VoicevoxCore  # type: ignore  # noqa: E402
 
 vv_core = VoicevoxCore(open_jtalk_dict_dir=Path(current_dir, OPEN_JTALK_DICT_DIR_PATH))
 
-with open(
-    Path(current_dir, "../../resource/common/voicevox_speaker_attributes.json"), "r"
-) as f:
-    speaker_attributes = json.load(f)["speaker_attributes"]
+class SpeakerAttribute(TypedDict):
+    value: int
+    label: str
+    gender: Literal["woman", "man"]
+
+speaker_attributes: List[SpeakerAttribute] =[
+    {"value": 3, "label": "ずんだもん", "gender": "woman"},
+    {"value": 2, "label": "四国めたん", "gender": "woman"},
+    {"value": 9, "label": "波音リツ", "gender": "woman"},
+    {"value": 14, "label": "冥鳴ひまり", "gender": "woman"},
+    {"value": 13, "label": "青山龍星", "gender": "man"},
+    {"value": 52, "label": "雀松朱司", "gender": "man"},
+    {"value": 51, "label": "聖騎士 紅桜", "gender": "man"},
+]
 
 
 class VoiceVoxAudioGenerator(IAudioGenerator):
-    def __init__(self, id: str, logger: logging.Logger):
+    def __init__(
+        self,
+        id: str,
+        logger: logging.Logger,
+        overview_speaker_id: int | None = None,
+        content_speaker_id: int | None = None,
+        ending_speaker_id: int | None = None,
+    ):
         super().__init__(id, logger)
+        self.overview_speaker_id = overview_speaker_id
+        self.content_speaker_id = content_speaker_id
+        self.ending_speaker_id = ending_speaker_id
         self.output_dir = os.path.join(current_dir, "../../../output", self.id, "audio")
         os.makedirs(self.output_dir, exist_ok=True)
 
     def generate(self, manuscript: Manuscript) -> Audio:
+        if self.overview_speaker_id is not None:
+            overview_speaker_id = self.overview_speaker_id
+        else:
+            overview_speaker_id = 3  # 個人的な好みでずんだもんを選択
+
         unique_user_ids = list(
             set([content.speaker_id for content in manuscript.contents])
         )
-        unique_user_id_to_speaker_attribute = {
-            user_id: speaker_attributes[i % len(speaker_attributes)]
-            for i, user_id in enumerate(unique_user_ids)
-        }
+        if self.content_speaker_id is not None:
+            # 指定された場合はすべての内容を同一話者で話す
+            content_speaker_attribute = None
+            for speaker_attribute in speaker_attributes:
+                if speaker_attribute["value"] == self.content_speaker_id:
+                    content_speaker_attribute = speaker_attribute
+                    break
+            if content_speaker_attribute is None:
+                raise ValueError(f"Speaker ID {self.content_speaker_id} is not found")
+            unique_user_id_to_speaker_attribute = {
+                user_id: content_speaker_attribute
+                for i, user_id in enumerate(unique_user_ids)
+            }
+
+        else:
+            unique_user_id_to_speaker_attribute = {
+                user_id: speaker_attributes[i % len(speaker_attributes)]
+                for i, user_id in enumerate(unique_user_ids)
+            }
+
         # Overviewの音声を生成
         overview_output_audio_file_path = os.path.join(self.output_dir, "overview.wav")
         os.remove(overview_output_audio_file_path) if os.path.exists(

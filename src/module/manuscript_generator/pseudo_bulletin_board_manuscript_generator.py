@@ -1,81 +1,102 @@
-import json
 import logging
 import os
-import random
+from typing import List
 
 from openai import OpenAI
 
-from .manuscript_generator import IManuscriptGenerator, Manuscript
+from .manuscript_generator import Content, IManuscriptGenerator, Manuscript
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
-    def __init__(self, id: str, openai_apikey: str, logger: logging.Logger) -> None:
-        super().__init__(id, logger)
+EXAMPLE_MANUSCRIPT = Manuscript(
+    title="【爆笑】ウブすぎるイッチの美容院初体験",
+    overview="今日の動画では、ウブすぎるイッチがみんなに騙されて恥をかいてしまった話を紹介します。",
+    keywords=["イッチ", "2ch", "5ch", "まとめ", "創作", "初体験"],
+    contents=[
+        Content(
+            speaker_id="id1",
+            text="マイシャンプーいるっていったやつでてこいやwwwww",
+            links=[],
+        ),
+        Content(
+            speaker_id="id2",
+            text="髪にこだわりがあるやつみたいでいいやん",
+            links=[],
+        ),
+        Content(
+            speaker_id="id1",
+            text="俺「すいません、マイシャンプー忘れたんですが...」",
+            links=[],
+        ),
+        Content(
+            speaker_id="id1",
+            text="店員「マイ...シャンプー...?」",
+            links=[],
+        ),
+        Content(
+            speaker_id="id3",
+            text="ウブすぎてわろた",
+            links=[],
+        ),
+        Content(
+            speaker_id="id4",
+            text="マイシャンプーってなんやねん",
+            links=[],
+        ),
+        Content(
+            speaker_id="id5",
+            text="てかお前髪ないやろ",
+            links=[],
+        ),
+        Content(
+            speaker_id="id6",
+            text="マイリンスも忘れんなよ",
+            links=[],
+        ),
+    ],
+    meta=None,
+)
 
+
+class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
+    def __init__(
+        self, id: str, themes: List[str], openai_apikey: str, logger: logging.Logger
+    ) -> None:
+        super().__init__(id, logger)
+        self.themes = themes
         try:
             self.openai_client = OpenAI(api_key=openai_apikey)
         except ValueError as e:
             raise e
 
     def generate(self) -> Manuscript:
-        json_example_manuscript: str
-        with open(
-            os.path.join(
-                current_dir,
-                "../../resource/pseudo_bulletin_board/example_manuscript.json",
-            ),
-            "r",
-        ) as f:
-            json_example_manuscript = f.read()
-
-        with open(
-            os.path.join(
-                current_dir, "../../resource/pseudo_bulletin_board/topics.json"
-            ),
-            "r",
-        ) as f:
-            json_topics = json.load(f)
-        topics = json_topics["topics"]
-        themes = list(topics.keys())
-        theme = random.choice(themes)
-        sub_themes = topics[theme]["sub_themes"]
-        sub_theme = random.choice(sub_themes)
-
         completion = self.openai_client.beta.chat.completions.parse(
             model="gpt-4o-2024-08-06",
             messages=[
                 {
                     "role": "system",
-                    "content": f"与えられるJSONは一般的な2chの会話風景です。このような形式で{theme}に関する会話を生成してください。",
+                    "content": f"与えられるJSONは一般的な2chの会話風景です。このような形式で{','.join(self.themes)}に関する会話を生成してください。",
                 },
                 {
                     "role": "system",
-                    "content": "なお、会話は必ず70件以上としてください。70件未満の場合は、会話を続けてください。",
+                    "content": "なお、会話は必ず30件以上生成してください。30件未満の場合は、会話を続けてください。",
                 },
-                {
-                    "role": "system",
-                    "content": f"サブテーマは{sub_theme}です。",
-                },
-                {"role": "user", "content": json_example_manuscript},
+                {"role": "user", "content": EXAMPLE_MANUSCRIPT.model_dump_json()},
             ],
             response_format=Manuscript,
         )
 
         manuscript = completion.choices[0].message.parsed
         if not manuscript:
-            raise Exception("GPT-4oによるクレンジングに失敗しました。")
+            raise Exception("GPT-4oによる文章生成に失敗しました。")
         manuscript.meta = {
             "type": "pseudo_bulletin_board",
-            "theme": theme,
-            "sub_theme": sub_theme,
+            "themes": self.themes,
         }
         self.logger.debug(manuscript)
 
         dump = manuscript.model_dump_json()
         with open(self.dump_file_path, "w") as f:
             f.write(dump)
-        return manuscript
-
         return manuscript

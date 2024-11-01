@@ -128,6 +128,7 @@ def bulletin(
 
 @app.command()
 def pseudo_bulletin(
+    themes: str = typer.Argument(..., help="Themes of the conversation"),
     audio_generator_type: str = typer.Option(
         "voicevox", help="Type of audio generator"
     ),
@@ -171,6 +172,7 @@ def pseudo_bulletin(
 
     manuscript_generator = PseudoBulletinBoardManuscriptGenerator(
         id=id,
+        themes=themes.split(","),
         openai_apikey=OPENAI_API_KEY,
         logger=logger,
     )
