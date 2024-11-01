@@ -10,10 +10,14 @@ from dotenv import load_dotenv
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
 from module.audio_generator import IAudioGenerator  # noqa: E402
+from module.audio_generator.voicevox_audio_generator import (  # noqa: E402
+    VoiceVoxAudioGenerator,
+)
 from module.manuscript_generator import (  # noqa: E402
     BulletinBoardManuscriptGenerator,
     IManuscriptGenerator,
     PseudoBulletinBoardManuscriptGenerator,
+    TriviaManuscriptGenerator,
 )
 from module.movie_generator import (  # noqa: E402
     IMovieGenerator,
@@ -24,6 +28,7 @@ from module.thumbnail_generator import (  # noqa: E402
     BulletinBoardShortThumbnailGenerator,
     BulletinBoardThumbnailGenerator,
     IThumbnailGenerator,
+    TriviaShortThumbnailGenerator,
 )
 
 logger = getLogger(__name__)
@@ -38,9 +43,6 @@ app = typer.Typer()
 @app.command()
 def bulletin(
     url: str = typer.Argument(..., help="URL of the bulletin board"),
-    audio_generator_type: str = typer.Option(
-        "voicevox", help="Type of audio generator"
-    ),
     thumbnail_generator_type: str = typer.Option(
         "bulletin_board", help="Type of thumbnail generator"
     ),
@@ -87,17 +89,7 @@ def bulletin(
         logger=logger,
     )
 
-    audio_generator: IAudioGenerator = None
-    if audio_generator_type == "voicevox":
-        from module.audio_generator.voicevox_audio_generator import (
-            VoiceVoxAudioGenerator,
-        )
-
-        audio_generator = VoiceVoxAudioGenerator(id=id, logger=logger)
-    else:
-        raise NotImplementedError(
-            f"Audio Generator Type {audio_generator_type} is not implemented"
-        )
+    audio_generator = VoiceVoxAudioGenerator(id=id, logger=logger)
 
     thumbnail_generator: IThumbnailGenerator = None
     if thumbnail_generator_type == "bulletin_board":
@@ -129,9 +121,6 @@ def bulletin(
 @app.command()
 def pseudo_bulletin(
     themes: str = typer.Argument(..., help="Themes of the conversation"),
-    audio_generator_type: str = typer.Option(
-        "voicevox", help="Type of audio generator"
-    ),
     thumbnail_generator_type: str = typer.Option(
         "bulletin_board", help="Type of thumbnail generator"
     ),
@@ -177,17 +166,7 @@ def pseudo_bulletin(
         logger=logger,
     )
 
-    audio_generator: IAudioGenerator = None
-    if audio_generator_type == "voicevox":
-        from module.audio_generator.voicevox_audio_generator import (
-            VoiceVoxAudioGenerator,
-        )
-
-        audio_generator = VoiceVoxAudioGenerator(id=id, logger=logger)
-    else:
-        raise NotImplementedError(
-            f"Audio Generator Type {audio_generator_type} is not implemented"
-        )
+    audio_generator = VoiceVoxAudioGenerator(id=id, logger=logger)
 
     thumbnail_generator: IThumbnailGenerator = None
     if thumbnail_generator_type == "bulletin_board":
@@ -204,6 +183,78 @@ def pseudo_bulletin(
         raise NotImplementedError(
             f"Movie Generator Type {movie_generator_type} is not implemented"
         )
+
+    pipeline(
+        manuscript_generator,
+        audio_generator,
+        thumbnail_generator,
+        movie_generator,
+        resume_step,
+    )
+
+    typer.echo(id)
+
+
+@app.command()
+def trivia(
+    themes: str = typer.Argument(..., help="Themes of the conversation"),
+    num_trivia: int = typer.Option(5, help="Number of trivia, Default is 5"),
+    voicevox_speaker_id: int = typer.Option(
+        3, help="Speaker ID of VoiceVox, Default is Zundamon (3)"
+    ),
+    resume_step: str = typer.Option(None, help="Resume Step"),
+    resume_id: str = typer.Option(None, help="Resume ID"),
+    debug: bool = typer.Option(False, help="Debug mode"),
+) -> None:
+    if debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
+    if resume_step is not None:
+        if resume_id is None:
+            raise ValueError("Resume ID is required")
+        else:
+            id = resume_id
+        logger.info(f"Resume ID: {id}")
+
+        if resume_step == "manuscript":
+            logger.info("Resume From Manuscript Generation")
+        elif resume_step == "audio":
+            logger.info("Resume From Audio Generation")
+        elif resume_step == "movie":
+            logger.info("Resume From Movie Generation")
+        elif resume_step == "thumbnail":
+            logger.info("Resume From Thumbnail Generation")
+        else:
+            raise ValueError(f"Invalid Resume Step: {resume_step}")
+    else:
+        id = ulid.new().str
+        logger.info(f"New ID: {id}")
+
+    logger.info("Generate Movie From Pseudo Bulletin Board")
+
+    manuscript_generator = TriviaManuscriptGenerator(
+        id=id,
+        themes=themes.split(","),
+        num_trivia=num_trivia,
+        openai_apikey=OPENAI_API_KEY,
+        logger=logger,
+    )
+
+    audio_generator = VoiceVoxAudioGenerator(
+        id=id,
+        logger=logger,
+        content_speaker_id=voicevox_speaker_id,
+    )
+
+    thumbnail_generator = TriviaShortThumbnailGenerator(
+        id=id,
+        openai_apikey=OPENAI_API_KEY,
+        logger=logger,
+    )
+
+    movie_generator: IMovieGenerator = None
 
     pipeline(
         manuscript_generator,
