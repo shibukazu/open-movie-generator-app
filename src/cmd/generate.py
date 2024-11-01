@@ -233,7 +233,7 @@ def trivia(
         id = ulid.new().str
         logger.info(f"New ID: {id}")
 
-    logger.info("Generate Movie From Pseudo Bulletin Board")
+    logger.info("Generate Trivia Movie")
 
     manuscript_generator = TriviaManuscriptGenerator(
         id=id,
