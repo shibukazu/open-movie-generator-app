@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import sys
 from logging import getLogger
 from typing import Any
@@ -15,7 +16,7 @@ from jinja2 import Template
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
-import shutil
+
 
 from module.manuscript_generator import Manuscript  # noqa: E402
 from util import UploadManager  # noqa: E402
