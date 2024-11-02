@@ -15,13 +15,16 @@ YouTube などによく見られるような動画を自動で生成する CLI �
 >
 > - https://nova.5ch.net
 
+
+
+
 ## Example
 
 ### 掲示板風動画
 
 |生成される動画|生成されるサムネイル|
 |:-:|:-:|
-|<video src="https://github.com/user-attachments/assets/c0336427-8919-4291-bb24-50a2d75abdbb" width="320" height="180" controls></video>|<img src="https://github.com/user-attachments/assets/0da68086-596a-4bc5-bab1-74ef0f49859f" width="320" height="180">|
+|<video src="https://github.com/user-attachments/assets/275c5cef-e978-411a-b250-20c7af59e977" width="320" height="180" controls></video>|<img src="https://github.com/user-attachments/assets/0da68086-596a-4bc5-bab1-74ef0f49859f" width="320" height="180">|
 
 
 ### トリビア動画
