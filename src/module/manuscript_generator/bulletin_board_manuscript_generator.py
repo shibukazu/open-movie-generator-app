@@ -19,6 +19,7 @@ REG_LINKS = [
     re.compile(r"http?:\/\/[-_.!~*'()a-zA-Z0-9;\/?:\@&=+\$.,%#]+", re.UNICODE),
     re.compile(r"www\.[a-zA-Z0-9;\/?:\@&=+\$.,%#]+", re.UNICODE),
 ]
+REG_HTML_TAG = re.compile(r"<[^>]*?>", re.UNICODE)
 
 
 class RawManuscript(BaseModel):
@@ -72,10 +73,12 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
             },
         )
 
-        comments = soup.find_all("article", class_="clear post")
+        comments = soup.find_all(id="threadcontent")[0].find_all(class_="clear post")
+        if len(comments) == 0:
+            raise Exception("コメントのスクレイピングに失敗しました")
         for comment in comments:
             user_id = comment.get("data-userid")
-            text = comment.find("section", class_="post-content").text
+            text = comment.find(class_="post-content").text
 
             raw_manuscript.contents.append(
                 Content(
@@ -95,7 +98,7 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
             messages=[
                 {
                     "role": "system",
-                    "content": "与えられたJSON形式のコメント一覧から、スレッドのタイトルに関連する重要なコメントを抽出してください。コメントは必ず15件以上抽出してください。",
+                    "content": "与えられたJSON形式のコメント一覧から、スレッドのタイトルに関連する重要なコメントを抽出してください。コメントは必ず15件以上抽出してください。また、内容を勝手に編集してはいけません。",
                 },
                 {
                     "role": "system",
@@ -126,6 +129,7 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
             content.text = content.text.strip()
             content.text = re.sub(r"^>>\d+", "", content.text).strip()
             content.text = REG_EMOJI.sub("", content.text)
+            content.text = REG_HTML_TAG.sub("", content.text)
 
             # リンク抽出とクレンジング
             links = []
