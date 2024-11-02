@@ -19,29 +19,17 @@ YouTube などによく見られるような動画を自動で生成する CLI �
 
 ### 掲示板風動画
 
-<div style="display: flex; gap: 50px; align-items: center;">
-<div style="display: flex; gap: 10px; align-items: center; flex-direction: column; justify-content: center;">
-<span>生成される動画の例</span>
-<video src="https://github.com/user-attachments/assets/c0336427-8919-4291-bb24-50a2d75abdbb" width="320" height="180" controls></video>
-</div>
-<div style="display: flex; gap: 10px; align-items: center; flex-direction: column; justify-content: center;">
-<span>生成されるサムネイル画像の例</span>
-<img src="https://github.com/user-attachments/assets/0da68086-596a-4bc5-bab1-74ef0f49859f" width="320" height="180">
-</div>
-</div>
+|生成される動画|生成されるサムネイル|
+|:-:|:-:|
+|<video src="https://github.com/user-attachments/assets/c0336427-8919-4291-bb24-50a2d75abdbb" width="320" height="180" controls></video>|<img src="https://github.com/user-attachments/assets/0da68086-596a-4bc5-bab1-74ef0f49859f" width="320" height="180">|
+
 
 ### トリビア動画
 
-<div style="display: flex; gap: 50px; align-items: center;">
-<div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-direction: column;">
-<span>生成される動画の例</span>
-<video src="https://github.com/user-attachments/assets/2b2a7356-08a8-4899-8769-496b6b31854c" width="180" height="320" controls></video>
-</div>
-<div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-direction: column;">
-<span>生成されるサムネイル画像の例</span>
-<img src="https://github.com/user-attachments/assets/a02b1db2-1c30-4653-9b42-572f565f2366" width="180" height="320">
-</div>
-</div>
+|生成される動画|生成されるサムネイル|
+|:-:|:-:|
+|<video src="https://github.com/user-attachments/assets/2b2a7356-08a8-4899-8769-496b6b31854c" width="180" height="320" controls></video>|<img src="https://github.com/user-attachments/assets/a02b1db2-1c30-4653-9b42-572f565f2366" width="180" height="320">|
+
 
 ## インストール
 
