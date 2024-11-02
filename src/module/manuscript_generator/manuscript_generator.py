@@ -35,7 +35,7 @@ class IManuscriptGenerator(metaclass=abc.ABCMeta):
     def skip(self) -> Manuscript:
         if not os.path.exists(self.dump_file_path):
             raise FileNotFoundError(
-                f"Manuscript dump file not found: {self.dump_file_path}"
+                f"原稿生成のダンプファイルがありません。初めから実行し直してください: {self.dump_file_path}"
             )
         with open(self.dump_file_path, "r") as f:
             dump = f.read()

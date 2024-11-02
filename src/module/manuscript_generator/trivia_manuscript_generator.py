@@ -62,4 +62,7 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
         dump = manuscript.model_dump_json()
         with open(self.dump_file_path, "w") as f:
             f.write(dump)
+
+        self.logger.info("GPTによるトリビアに基づいた原稿を生成しました")
+
         return manuscript

@@ -99,4 +99,7 @@ class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
         dump = manuscript.model_dump_json()
         with open(self.dump_file_path, "w") as f:
             f.write(dump)
+
+        self.logger.info("GPTによる擬似掲示板に基づいた原稿を生成しました")
+
         return manuscript

@@ -20,16 +20,15 @@ from module.manuscript_generator import (  # noqa: E402
     TriviaManuscriptGenerator,
 )
 from module.movie_generator import (  # noqa: E402
+    DalleShortMovieGenerator,
     IMovieGenerator,
-    IrasutoyaMovieGenerator,
+    IrasutoyaLongMovieGenerator,
     IrasutoyaShortMovieGenerator,
-    TriviaShortMovieGenerator,
 )
 from module.thumbnail_generator import (  # noqa: E402
-    BulletinBoardShortThumbnailGenerator,
-    BulletinBoardThumbnailGenerator,
+    BulletinBoardLongThumbnailGenerator,
+    DalleThumbnailGenerator,
     IThumbnailGenerator,
-    TriviaShortThumbnailGenerator,
 )
 
 logger = getLogger(__name__)
@@ -43,200 +42,122 @@ app = typer.Typer()
 
 @app.command()
 def bulletin(
-    url: str = typer.Argument(..., help="URL of the bulletin board"),
-    thumbnail_generator_type: str = typer.Option(
-        "bulletin_board", help="Type of thumbnail generator"
-    ),
-    movie_generator_type: str = typer.Option(
-        "irasutoya", help="Type of movie generator"
-    ),
-    resume_step: str = typer.Option(None, help="Resume Step"),
-    resume_id: str = typer.Option(None, help="Resume ID"),
-    debug: bool = typer.Option(False, help="Debug mode"),
+    url: str = typer.Argument(..., help="掲示板URL"),
+    short: bool = typer.Option(False, help="短尺動画を生成するかどうか"),
+    resume_step: str = typer.Option(None, help="どのステップから再開するか"),
+    resume_id: str = typer.Option(None, help="どのIDを再開するか"),
+    debug: bool = typer.Option(False, help="Debugモード"),
 ) -> None:
-    if debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    set_log_level(debug)
+    movie_id = get_id(resume_id)
 
-    if resume_step is not None:
-        if resume_id is None:
-            raise ValueError("Resume ID is required")
-        else:
-            id = resume_id
-        logger.info(f"Resume ID: {id}")
-
-        if resume_step == "manuscript":
-            logger.info("Resume From Manuscript Generation")
-        elif resume_step == "audio":
-            logger.info("Resume From Audio Generation")
-        elif resume_step == "movie":
-            logger.info("Resume From Movie Generation")
-        elif resume_step == "thumbnail":
-            logger.info("Resume From Thumbnail Generation")
-        else:
-            raise ValueError(f"Invalid Resume Step: {resume_step}")
-    else:
-        id = ulid.new().str
-        logger.info(f"New ID: {id}")
-
-    logger.info("Generate Movie From Bulletin Board (5ch)")
-    logger.info(f"URL: {url}")
+    logger.info(f"掲示板から{'短尺' if short else '長尺'}動画を生成します")
+    logger.info(f"参照URL: {url}")
 
     manuscript_generator = BulletinBoardManuscriptGenerator(
-        id=id,
+        id=movie_id,
         source_url=url,
         openai_apikey=OPENAI_API_KEY,
         logger=logger,
     )
 
-    audio_generator = VoiceVoxAudioGenerator(id=id, logger=logger)
+    audio_generator = VoiceVoxAudioGenerator(id=movie_id, logger=logger)
 
-    thumbnail_generator: IThumbnailGenerator = None
-    if thumbnail_generator_type == "bulletin_board":
-        thumbnail_generator = BulletinBoardThumbnailGenerator(id=id, logger=logger)
-    elif thumbnail_generator_type == "bulletin_board_short":
-        thumbnail_generator = BulletinBoardShortThumbnailGenerator(id=id, logger=logger)
-
-    movie_generator: IMovieGenerator = None
-    if movie_generator_type == "irasutoya":
-        movie_generator = IrasutoyaMovieGenerator(id=id, logger=logger)
-    elif movie_generator_type == "irasutoya_short":
-        movie_generator = IrasutoyaShortMovieGenerator(id=id, logger=logger)
-    else:
-        raise NotImplementedError(
-            f"Movie Generator Type {movie_generator_type} is not implemented"
+    if not short:
+        thumbnail_generator = BulletinBoardLongThumbnailGenerator(
+            id=movie_id, logger=logger
         )
+    else:
+        thumbnail_generator = DalleThumbnailGenerator(
+            id=movie_id, openai_apikey=OPENAI_API_KEY, is_short=short, logger=logger
+        )
+
+    if not short:
+        movie_generator = IrasutoyaLongMovieGenerator(id=movie_id, logger=logger)
+    else:
+        movie_generator = IrasutoyaShortMovieGenerator(id=movie_id, logger=logger)
 
     pipeline(
         manuscript_generator,
         audio_generator,
         thumbnail_generator,
         movie_generator,
+        movie_id,
         resume_step,
     )
-
-    typer.echo(id)
 
 
 @app.command()
 def pseudo_bulletin(
-    themes: str = typer.Argument(..., help="Themes of the conversation"),
-    thumbnail_generator_type: str = typer.Option(
-        "bulletin_board", help="Type of thumbnail generator"
+    themes: str = typer.Argument(
+        ..., help="生成したい掲示板のテーマをコンマ区切りで指定"
     ),
-    movie_generator_type: str = typer.Option(
-        "irasutoya", help="Type of movie generator"
-    ),
-    resume_step: str = typer.Option(None, help="Resume Step"),
-    resume_id: str = typer.Option(None, help="Resume ID"),
-    debug: bool = typer.Option(False, help="Debug mode"),
+    short: bool = typer.Option(False, help="短尺動画を生成するかどうか"),
+    resume_step: str = typer.Option(None, help="どのステップから再開するか"),
+    resume_id: str = typer.Option(None, help="どのIDを再開するか"),
+    debug: bool = typer.Option(False, help="Debugモード"),
 ) -> None:
-    if debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    set_log_level(debug)
+    movie_id = get_id(resume_id)
 
-    if resume_step is not None:
-        if resume_id is None:
-            raise ValueError("Resume ID is required")
-        else:
-            id = resume_id
-        logger.info(f"Resume ID: {id}")
-
-        if resume_step == "manuscript":
-            logger.info("Resume From Manuscript Generation")
-        elif resume_step == "audio":
-            logger.info("Resume From Audio Generation")
-        elif resume_step == "movie":
-            logger.info("Resume From Movie Generation")
-        elif resume_step == "thumbnail":
-            logger.info("Resume From Thumbnail Generation")
-        else:
-            raise ValueError(f"Invalid Resume Step: {resume_step}")
-    else:
-        id = ulid.new().str
-        logger.info(f"New ID: {id}")
-
-    logger.info("Generate Movie From Pseudo Bulletin Board")
+    logger.info(
+        f"GPTを用いた疑似掲示板から{'短尺' if short else '長尺'}動画を生成します"
+    )
+    logger.info(f"テーマ: {themes}")
 
     manuscript_generator = PseudoBulletinBoardManuscriptGenerator(
-        id=id,
+        id=movie_id,
         themes=themes.split(","),
         openai_apikey=OPENAI_API_KEY,
         logger=logger,
     )
 
-    audio_generator = VoiceVoxAudioGenerator(id=id, logger=logger)
+    audio_generator = VoiceVoxAudioGenerator(id=movie_id, logger=logger)
 
-    thumbnail_generator: IThumbnailGenerator = None
-    if thumbnail_generator_type == "bulletin_board":
-        thumbnail_generator = BulletinBoardThumbnailGenerator(id=id, logger=logger)
-    elif thumbnail_generator_type == "bulletin_board_short":
-        thumbnail_generator = BulletinBoardShortThumbnailGenerator(id=id, logger=logger)
-
-    movie_generator: IMovieGenerator = None
-    if movie_generator_type == "irasutoya":
-        movie_generator = IrasutoyaMovieGenerator(id=id, logger=logger)
-    elif movie_generator_type == "irasutoya_short":
-        movie_generator = IrasutoyaShortMovieGenerator(id=id, logger=logger)
-    else:
-        raise NotImplementedError(
-            f"Movie Generator Type {movie_generator_type} is not implemented"
+    if not short:
+        thumbnail_generator = BulletinBoardLongThumbnailGenerator(
+            id=movie_id, logger=logger
         )
+    else:
+        thumbnail_generator = DalleThumbnailGenerator(
+            id=movie_id, openai_apikey=OPENAI_API_KEY, is_short=short, logger=logger
+        )
+
+    if not short:
+        movie_generator = IrasutoyaLongMovieGenerator(id=movie_id, logger=logger)
+    else:
+        movie_generator = IrasutoyaShortMovieGenerator(id=movie_id, logger=logger)
 
     pipeline(
         manuscript_generator,
         audio_generator,
         thumbnail_generator,
         movie_generator,
+        movie_id,
         resume_step,
     )
-
-    typer.echo(id)
 
 
 @app.command()
 def trivia(
-    themes: str = typer.Argument(..., help="Themes of the conversation"),
-    num_trivia: int = typer.Option(5, help="Number of trivia, Default is 5"),
-    voicevox_speaker_id: int = typer.Option(
-        3, help="Speaker ID of VoiceVox, Default is Zundamon (3)"
-    ),
-    resume_step: str = typer.Option(None, help="Resume Step"),
-    resume_id: str = typer.Option(None, help="Resume ID"),
-    debug: bool = typer.Option(False, help="Debug mode"),
+    themes: str = typer.Argument(..., help="Triviaのテーマをコンマ区切りで指定"),
+    num_trivia: int = typer.Option(5, help="Triviaの数(デフォルト: 5)"),
+    short: bool = typer.Option(False, help="短尺動画を生成するかどうか"),
+    voicevox_speaker_id: int = typer.Option(3, help="VoiceVoxの話者ID(デフォルト: 3)"),
+    resume_step: str = typer.Option(None, help="どのステップから再開するか"),
+    resume_id: str = typer.Option(None, help="どのIDを再開するか"),
+    debug: bool = typer.Option(False, help="Debugモード"),
 ) -> None:
-    if debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    set_log_level(debug)
+    movie_id = get_id(resume_id)
 
-    if resume_step is not None:
-        if resume_id is None:
-            raise ValueError("Resume ID is required")
-        else:
-            id = resume_id
-        logger.info(f"Resume ID: {id}")
-
-        if resume_step == "manuscript":
-            logger.info("Resume From Manuscript Generation")
-        elif resume_step == "audio":
-            logger.info("Resume From Audio Generation")
-        elif resume_step == "movie":
-            logger.info("Resume From Movie Generation")
-        elif resume_step == "thumbnail":
-            logger.info("Resume From Thumbnail Generation")
-        else:
-            raise ValueError(f"Invalid Resume Step: {resume_step}")
-    else:
-        id = ulid.new().str
-        logger.info(f"New ID: {id}")
-
-    logger.info("Generate Trivia Movie")
+    logger.info(
+        f"GPTを用いて生成したトリビアから{'短尺' if short else '長尺'}動画を生成します"
+    )
+    logger.info(f"テーマ: {themes}")
 
     manuscript_generator = TriviaManuscriptGenerator(
-        id=id,
+        id=movie_id,
         themes=themes.split(","),
         num_trivia=num_trivia,
         openai_apikey=OPENAI_API_KEY,
@@ -244,30 +165,50 @@ def trivia(
     )
 
     audio_generator = VoiceVoxAudioGenerator(
-        id=id,
+        id=movie_id,
         logger=logger,
         content_speaker_id=voicevox_speaker_id,
     )
 
-    thumbnail_generator = TriviaShortThumbnailGenerator(
-        id=id,
+    thumbnail_generator = DalleThumbnailGenerator(
+        id=movie_id,
         openai_apikey=OPENAI_API_KEY,
+        is_short=short,
         logger=logger,
     )
 
-    movie_generator = TriviaShortMovieGenerator(
-        id=id, openai_apikey=OPENAI_API_KEY, logger=logger
-    )
+    if not short:
+        raise NotImplementedError("Triviaの長尺動画は未実装です")
+    else:
+        movie_generator = DalleShortMovieGenerator(
+            id=movie_id, openai_apikey=OPENAI_API_KEY, logger=logger
+        )
 
     pipeline(
         manuscript_generator,
         audio_generator,
         thumbnail_generator,
         movie_generator,
+        movie_id,
         resume_step,
     )
 
-    typer.echo(id)
+
+def get_id(resume_id: str | None) -> str:
+    if resume_id is not None:
+        logger.info(f"次のIDを再開します: {resume_id}")
+        return resume_id
+    else:
+        new_id = ulid.new().str
+        logger.info(f"新しいID: {new_id}")
+        return new_id
+
+
+def set_log_level(debug: bool) -> None:
+    if debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
 
 def pipeline(
@@ -275,20 +216,35 @@ def pipeline(
     audio_generator: IAudioGenerator,
     thumbnail_generator: IThumbnailGenerator,
     movie_generator: IMovieGenerator,
+    movie_id: str,
     resume_step: str | None = None,
 ) -> None:
     if not resume_step or resume_step == "manuscript":
-        logger.info("Step1: Generate Manuscript")
-        manuscript = manuscript_genetrator.generate()
+        logger.info("Step1: 原稿生成")
+        try:
+            manuscript = manuscript_genetrator.generate()
+        except Exception as e:
+            logger.error(f"原稿生成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=manuscript"
+            )
+            raise e
     else:
-        logger.info("⏭️ Skip: Manuscript Generation")
+        logger.info("⏭️ Skip: 原稿生成")
         manuscript = manuscript_genetrator.skip()
 
     if not resume_step or resume_step == "manuscript" or resume_step == "audio":
-        logger.info("Step2: Generate Audio")
-        audio = audio_generator.generate(manuscript)
+        logger.info("Step2: 音声合成")
+        try:
+            audio = audio_generator.generate(manuscript)
+        except Exception as e:
+            logger.error(f"音声合成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=audio"
+            )
+            raise e
     else:
-        logger.info("⏭️ Skip: Audio Generation")
+        logger.info("⏭️ Skip: 音声合成")
         audio = audio_generator.skip()
 
     if (
@@ -297,10 +253,17 @@ def pipeline(
         or resume_step == "audio"
         or resume_step == "thumbnail"
     ):
-        logger.info("Step3: Generate Thumbnail")
-        thumbnail_generator.generate(manuscript)
+        logger.info("Step3: サムネイル生成")
+        try:
+            thumbnail_generator.generate(manuscript)
+        except Exception as e:
+            logger.error(f"サムネイル生成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=thumbnail"
+            )
+            raise e
     else:
-        logger.info("⏭️ Skip: Thumbnail Generation")
+        logger.info("⏭️ Skip: サムネイル生成")
         thumbnail_generator.skip()
 
     if (
@@ -310,12 +273,19 @@ def pipeline(
         or resume_step == "thumbnail"
         or resume_step == "movie"
     ):
-        logger.info("Step4: Generate Movie")
-        movie_generator.generate(manuscript, audio)
+        logger.info("Step4: 動画生成")
+        try:
+            movie_generator.generate(manuscript, audio)
+        except Exception as e:
+            logger.error(f"動画生成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=movie"
+            )
+            raise e
     else:
-        logger.info("⏭️ Skip: Thumbnail Generation")
+        logger.info("⏭️ Skip: 動画生成")
 
-    logger.info("All Step Done!")
+    logger.info("すべてのステップを正常に終了しました")
 
 
 if __name__ == "__main__":
