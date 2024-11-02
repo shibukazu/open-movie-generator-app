@@ -128,7 +128,7 @@ class BulletinBoardLongThumbnailGenerator(IThumbnailGenerator):
         temp_draw.text((x, y), wrapped_titles[0], font=title_font, fill=title_color)
 
         if len(wrapped_titles) > 1:
-            y = height - text_height - 40
+            y = height - text_height * (len(wrapped_titles) - 1) - 40
             for wrapped_title in wrapped_titles[1:]:
                 x = (width - text_width) // 2
                 for dx in range(-outline_width, outline_width + 1):
@@ -141,7 +141,7 @@ class BulletinBoardLongThumbnailGenerator(IThumbnailGenerator):
                                 fill=(255, 255, 255, 255),
                             )
                 temp_draw.text((x, y), wrapped_title, font=title_font, fill=title_color)
-                y -= text_height + 10
+                y += text_height + 10
 
         new_background = background.copy()
         new_background.alpha_composite(temp_image)
@@ -182,7 +182,7 @@ class BulletinBoardLongThumbnailGenerator(IThumbnailGenerator):
             id_font=id_font,
             wrapped_texts=wrapped_text1s,
             text_font=comment_font,
-            position=(20, height // 3),
+            position=(20, height // 4),
         )
         background = self.draw_comment_board(
             background=background,
@@ -190,7 +190,7 @@ class BulletinBoardLongThumbnailGenerator(IThumbnailGenerator):
             id_font=id_font,
             wrapped_texts=wrapped_text2s,
             text_font=comment_font,
-            position=(20, height // 3 + 250),
+            position=(20, height // 4 + 250),
         )
 
         # キャラクターを描画
