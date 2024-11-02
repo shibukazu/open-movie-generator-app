@@ -192,7 +192,7 @@ def bulk(
         }
 
         try:
-            logger.info("Uploading movie...")
+            logger.info(f"Uploading movie... (ID: {ready_id})")
             request = youtube.videos().insert(
                 part="snippet,status",
                 body=request_body,
@@ -220,12 +220,12 @@ def bulk(
 
             # output_dirの中身をすべて削除
             shutil.rmtree(output_dir)
+
+            upload_manager.remove(ready_id)
         except HttpError as e:
             logger.error(e)
 
-        upload_manager.remove(ready_id)
-
-    logger.info("All movies were successfully uploaded.")
+    logger.info("アップロード処理が完了しました")
 
 
 if __name__ == "__main__":

@@ -77,13 +77,29 @@ class ImageGenerator:
     ) -> None:
         filtered_keywords = self.__filter_keywords(keywords)
         self.logger.info(f"フィルター後キーワード一覧: {filtered_keywords}")
-        image_generation_response = self.openai_client.images.generate(
-            model="dall-e-3",
-            prompt=f"{','.join(filtered_keywords)}",
-            size=image_size,
-            quality="standard",
-            n=1,
-        )
+        if len(filtered_keywords) == 0:
+            self.logger.info(
+                "フィルター後キーワードが空のため、動画というキーワードで生成を試みます"
+            )
+            filtered_keywords = ["動画"]
+        try:
+            image_generation_response = self.openai_client.images.generate(
+                model="dall-e-3",
+                prompt=f"{','.join(filtered_keywords)}",
+                size=image_size,
+                quality="standard",
+                n=1,
+            )
+        except Exception as e:
+            self.logger.error(f"画像生成に失敗しました: {e}")
+            self.logger.info("代わりに動画というキーワードで生成を試みます")
+            image_generation_response = self.openai_client.images.generate(
+                model="dall-e-3",
+                prompt="動画",
+                size=image_size,
+                quality="standard",
+                n=1,
+            )
         image_url = image_generation_response.data[0].url
         if image_url is None:
             raise ValueError("DALL-Eでの画像生成に失敗しました。")
@@ -108,13 +124,29 @@ class ImageGenerator:
     ) -> None:
         filtered_keywords = self.__extract_and_filter_keywords(text)
         self.logger.info(f"フィルター後キーワード一覧: {filtered_keywords}")
-        image_generation_response = self.openai_client.images.generate(
-            model="dall-e-3",
-            prompt=f"{','.join(filtered_keywords)}",
-            size=image_size,
-            quality="standard",
-            n=1,
-        )
+        if len(filtered_keywords) == 0:
+            self.logger.info(
+                "フィルター後キーワードが空のため、動画というキーワードで生成を試みます"
+            )
+            filtered_keywords = ["動画"]
+        try:
+            image_generation_response = self.openai_client.images.generate(
+                model="dall-e-3",
+                prompt=f"{','.join(filtered_keywords)}",
+                size=image_size,
+                quality="standard",
+                n=1,
+            )
+        except Exception as e:
+            self.logger.error(f"画像生成に失敗しました: {e}")
+            self.logger.info("代わりに動画というキーワードで生成を試みます")
+            image_generation_response = self.openai_client.images.generate(
+                model="dall-e-3",
+                prompt="動画",
+                size=image_size,
+                quality="standard",
+                n=1,
+            )
         image_url = image_generation_response.data[0].url
         if image_url is None:
             raise ValueError("DALL-Eでの画像生成に失敗しました。")
