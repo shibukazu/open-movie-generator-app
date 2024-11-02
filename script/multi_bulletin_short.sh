@@ -12,6 +12,6 @@ urls=$(jq -r '.urls[:5][]' "$json_file")
 
 for url in $urls; do
     echo "Processing URL: $url"
-    uv run src/cmd/main.py generate bulletin $url --movie-generator-type=irasutoya_short --thumbnail-generator-type=bulletin_board_short   
+    uv run src/cmd/main.py generate bulletin $url --short
     jq --arg url "$url" 'del(.urls[] | select(. == $url))' "$json_file" > tmp.json && mv tmp.json "$json_file"
 done
