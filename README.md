@@ -19,23 +19,29 @@ YouTube などによく見られるような動画を自動で生成する CLI �
 
 ### 掲示板風動画
 
-生成される動画の例　（長尺動画のため一部抜粋）
-
+<div style="display: flex; gap: 50px; align-items: center;">
+<div style="display: flex; gap: 10px; align-items: center; flex-direction: column; justify-content: center;">
+<span>生成される動画の例</span>
 <video src="https://github.com/user-attachments/assets/c0336427-8919-4291-bb24-50a2d75abdbb" width="320" height="180" controls></video>
-
-生成されるサムネイル画像の例
-
+</div>
+<div style="display: flex; gap: 10px; align-items: center; flex-direction: column; justify-content: center;">
+<span>生成されるサムネイル画像の例</span>
 <img src="https://github.com/user-attachments/assets/0da68086-596a-4bc5-bab1-74ef0f49859f" width="320" height="180">
+</div>
+</div>
 
 ### トリビア動画
 
-生成される動画の例
-
+<div style="display: flex; gap: 50px; align-items: center;">
+<div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-direction: column;">
+<span>生成される動画の例</span>
 <video src="https://github.com/user-attachments/assets/2b2a7356-08a8-4899-8769-496b6b31854c" width="180" height="320" controls></video>
-
-生成されるサムネイル画像の例
-
+</div>
+<div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-direction: column;">
+<span>生成されるサムネイル画像の例</span>
 <img src="https://github.com/user-attachments/assets/a02b1db2-1c30-4653-9b42-572f565f2366" width="180" height="320">
+</div>
+</div>
 
 ## インストール
 
@@ -60,31 +66,31 @@ YouTube などによく見られるような動画を自動で生成する CLI �
 
 ## Let's Try
 
-### 5ch スレッドからフル動画を生成する
+### 5ch スレッドに基づいたフル動画を生成する
 
 ```bash
-uv run src/cmd/main.py generate bulletin https://nova.5ch.net/test/read.cgi/livegalileo/1730087373/
+uv run src/cmd/main.py generate bulletin $url
 ```
 
-### 5ch スレッドからショート動画を生成する
+### 5ch スレッドに基づいたショート動画を生成する
 
 ```bash
-uv run src/cmd/main.py generate bulletin https://nova.5ch.net/test/read.cgi/livegalileo/1730087373/ --short
+uv run src/cmd/main.py generate bulletin $url --short
 ```
 
-### GPT を用いた架空のスレッドからフル動画を生成する
+### 架空のスレッドに基づいたフル動画を生成する
 
 ```bash
 uv run src/cmd/main.py generate pseudo-bulletin モネ,睡蓮,印象派
 ```
 
-### GPT を用いた架空のスレッドからショート動画を生成する
+### 架空のスレッドに基づいたショート動画を生成する
 
 ```bash
 uv run src/cmd/main.py generate pseudo-bulletin モネ,睡蓮,印象派 --short
 ```
 
-### GPT を用いた雑学ショート動画動画を生成する
+### 雑学ショート動画を生成する
 
 ```bash
 uv run src/cmd/main.py generate trivia 日本人,漫画,文化 --short
@@ -102,4 +108,5 @@ https://5ch.net/matome.html
 ## ライセンス
 
 本プロジェクトは商用・非商用を問わず、自由に利用することができます。
+
 本プロジェクトを用いて作成された動画を公開する際には本レポジトリをクレジットとして明記してください。
