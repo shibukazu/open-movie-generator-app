@@ -42,12 +42,14 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
     def generate(self) -> Manuscript:
         raw_manuscript: RawManuscript
         if self.source_url_type == "nova":
-            self.logger.info("Genarate Manuscript from 5ch Nova")
+            self.logger.info("5ch novaからスレッドの内容を取得します")
             raw_manuscript = self.generate_raw_manuscript_from_nova()
         else:
-            raise NotImplementedError("未実装のURLタイプです。")
+            raise NotImplementedError(
+                f"サポートされていないURLタイプです: {self.source_url_type}"
+            )
         self.logger.debug(raw_manuscript)
-        self.logger.info("Cleansing Manuscript")
+        self.logger.info("スレッドの内容をクレンジングします")
         manuscript = self.cleansing_raw_manuscript(raw_manuscript)
         self.logger.debug(manuscript)
 
@@ -61,7 +63,6 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
         response.encoding = "shift_jis"
 
         soup = BeautifulSoup(response.text, "html.parser")
-        # オリジナル原稿の作成
         raw_manuscript = RawManuscript(
             contents=[],
             meta={
@@ -74,7 +75,6 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
         comments = soup.find_all("article", class_="clear post")
         for comment in comments:
             user_id = comment.get("data-userid")
-            # name = comment.find("span", class_="postusername").text
             text = comment.find("section", class_="post-content").text
 
             raw_manuscript.contents.append(
@@ -139,6 +139,8 @@ class BulletinBoardManuscriptGenerator(IManuscriptGenerator):
 
             if not content.text:
                 manuscript.contents.remove(content)
+
+        self.logger.info("掲示板に基づいた原稿を生成しました")
 
         return manuscript
 

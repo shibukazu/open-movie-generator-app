@@ -37,7 +37,9 @@ class IAudioGenerator(metaclass=abc.ABCMeta):
 
     def skip(self) -> Audio:
         if not os.path.exists(self.dump_file_path):
-            raise FileNotFoundError(f"Audio dump file not found: {self.dump_file_path}")
+            raise FileNotFoundError(
+                f"音声合成のダンプファイルがありません。初めから実行し直してください: {self.dump_file_path}"
+            )
         with open(self.dump_file_path, "r") as f:
             dump = f.read()
         audio = Audio.model_validate_json(dump)

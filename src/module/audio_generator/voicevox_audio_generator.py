@@ -4,7 +4,7 @@ import os
 import wave
 from ctypes import CDLL
 from pathlib import Path
-from typing import TypedDict, Literal, List
+from typing import List, Literal, TypedDict
 
 from dotenv import load_dotenv
 
@@ -34,12 +34,14 @@ from voicevox_core import VoicevoxCore  # type: ignore  # noqa: E402
 
 vv_core = VoicevoxCore(open_jtalk_dict_dir=Path(current_dir, OPEN_JTALK_DICT_DIR_PATH))
 
+
 class SpeakerAttribute(TypedDict):
     value: int
     label: str
     gender: Literal["woman", "man"]
 
-speaker_attributes: List[SpeakerAttribute] =[
+
+speaker_attributes: List[SpeakerAttribute] = [
     {"value": 3, "label": "ずんだもん", "gender": "woman"},
     {"value": 2, "label": "四国めたん", "gender": "woman"},
     {"value": 9, "label": "波音リツ", "gender": "woman"},
@@ -83,7 +85,9 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
                     content_speaker_attribute = speaker_attribute
                     break
             if content_speaker_attribute is None:
-                raise ValueError(f"Speaker ID {self.content_speaker_id} is not found")
+                raise ValueError(
+                    f"次の話者IDはサポートされていません: {self.content_speaker_id}"
+                )
             unique_user_id_to_speaker_attribute = {
                 user_id: content_speaker_attribute
                 for i, user_id in enumerate(unique_user_ids)
@@ -161,7 +165,9 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
                             )
                         )
             except Exception:
-                raise Exception(f"Failed to generate audio for comment: {content.text}")
+                raise Exception(
+                    f"次のコンテンツの音声生成に失敗しました: {content.text}"
+                )
 
             audio = Audio(
                 overview_detail=overview_detail, content_details=content_details
@@ -171,6 +177,7 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
 
             with open(self.dump_file_path, "w") as f:
                 f.write(dump)
-        self.logger.info("VoiceVox audio genaration success")
+
+        self.logger.info("VOICEVOXを用いた動画音声を生成しました")
 
         return audio

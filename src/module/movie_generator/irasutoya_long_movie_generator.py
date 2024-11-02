@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import wave
 
 from moviepy.audio.fx.all import audio_loop, volumex
@@ -17,16 +18,24 @@ from ..audio_generator import Audio
 from ..manuscript_generator import Manuscript
 from .movie_generator import IMovieGenerator
 
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(parent_dir)
+
+from util import wrap_text  # noqa: E402
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-class IrasutoyaMovieGenerator(IMovieGenerator):
+class IrasutoyaLongMovieGenerator(IMovieGenerator):
     def __init__(self, id: str, is_short: bool, logger: logging.Logger):
         super().__init__(id, is_short=is_short, logger=logger)
         if self.is_short:
             raise ValueError("IrasutoyaMovieGeneratorは長尺動画用です。")
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
+        width, height = 1920, 1080
+        font_size = 50
+
         # 音声を順次結合し、それに合わせて動画を作成する
         video_clips = []
         audio_clips = []
@@ -47,7 +56,7 @@ class IrasutoyaMovieGenerator(IMovieGenerator):
                 TextClip(
                     manuscript.title,
                     font=self.font_path,
-                    fontsize=50,
+                    fontsize=font_size,
                     color="black",
                 )
                 .set_position(("center", 800))
@@ -86,16 +95,8 @@ class IrasutoyaMovieGenerator(IMovieGenerator):
                         speaker_image_path = (
                             self.resource_manager.random_woman_character_image_path()
                         )
-            # 25文字以上の場合は分割
-            # TODO: 日本語の場合は文字数で分割すると意味が変わることがあるので、形態素解析を使って分割する
-            splitted_texts = []
-            if len(content_detail.transcript) > 25:
-                splitted_texts = [
-                    content_detail.transcript[i : i + 25]
-                    for i in range(0, len(content_detail.transcript), 25)
-                ]
-            else:
-                splitted_texts = [content_detail.transcript]
+
+            wrapped_texts = wrap_text(content_detail.transcript, width // font_size)
             prev_speaker_image_path = speaker_image_path
             prev_speaker_id = content_detail.speaker_id
             with wave.open(content_wav_file_path, "rb") as wav:
@@ -107,7 +108,7 @@ class IrasutoyaMovieGenerator(IMovieGenerator):
                     .fx(volumex, 1.0)
                 )
                 subtitle_clips = []
-                if len(splitted_texts) == 1:
+                if len(wrapped_texts) == 1:
                     subtitle_clip = (
                         TextClip(
                             content_transcript,
@@ -122,10 +123,10 @@ class IrasutoyaMovieGenerator(IMovieGenerator):
                     subtitle_clips.append(subtitle_clip)
                 else:
                     line_height = 70
-                    for i, subtext in enumerate(splitted_texts):
+                    for i, text in enumerate(wrapped_texts):
                         subtitle_clip = (
                             TextClip(
-                                subtext,
+                                text,
                                 font=self.font_path,
                                 fontsize=50,
                                 color="black",
@@ -168,7 +169,7 @@ class IrasutoyaMovieGenerator(IMovieGenerator):
         # BGV
         bgv_clip = (
             VideoFileClip(self.resource_manager.random_bgv_path())
-            .resize((1920, 1080))
+            .resize((width, height))
             .loop(duration=total_duration)
         )
         # BGM
