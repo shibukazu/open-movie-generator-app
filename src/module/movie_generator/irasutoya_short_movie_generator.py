@@ -28,13 +28,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class IrasutoyaShortMovieGenerator(IMovieGenerator):
-    def __init__(self, id: str, is_short: bool, logger: logging.Logger):
-        super().__init__(id, is_short=is_short, logger=logger)
-        if not self.is_short:
-            raise ValueError("IrasutoyaShortMovieGeneratorは短尺動画用です。")
+    def __init__(self, id: str, logger: logging.Logger):
+        super().__init__(id, is_short=False, logger=logger)
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
-        height, width = 1080, 1920
+        width, height = 1080, 1920
         font_size = 50
 
         # 音声を順次結合し、それに合わせて動画を作成する
@@ -88,7 +86,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
                         speaker_image_path = (
                             self.resource_manager.random_woman_character_image_path()
                         )
-            wrapped_texts = wrap_text(content_detail.transcript, width // font_size)
+            wrapped_texts = wrap_text(content_detail.transcript, width // font_size - 2)
 
             prev_speaker_image_path = speaker_image_path
             prev_speaker_id = content_detail.speaker_id
@@ -109,7 +107,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
                         TextClip(
                             content_transcript,
                             font=self.font_path,
-                            fontsize=50,
+                            fontsize=font_size,
                             color="black",
                         )
                         .set_position(("center", 1500))
@@ -124,7 +122,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
                             TextClip(
                                 text,
                                 font=self.font_path,
-                                fontsize=50,
+                                fontsize=font_size,
                                 color="black",
                             )
                             .set_start(start_time)
@@ -167,7 +165,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
         # BGV
         bgv_clip = (
             VideoFileClip(self.resource_manager.random_bgv_path())
-            .resize((height, width))
+            .resize((width, height))
             .loop(duration=total_duration)
         )
         # BGM

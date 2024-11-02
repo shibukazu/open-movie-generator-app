@@ -19,11 +19,9 @@ from util import wrap_text  # noqa: E402
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
-class BulletinBoardThumbnailGenerator(IThumbnailGenerator):
-    def __init__(self, id: str, is_short: bool, logger: logging.Logger) -> None:
-        super().__init__(id, is_short, logger)
-        if self.is_short:
-            raise ValueError("BulletinBoardThumbnailGeneratorは長尺動画用です。")
+class BulletinBoardLongThumbnailGenerator(IThumbnailGenerator):
+    def __init__(self, id: str, logger: logging.Logger) -> None:
+        super().__init__(id, False, logger)
 
     def calc_contrast_color(self, image_path: str) -> Tuple[int, int, int]:
         image = Image.open(image_path)

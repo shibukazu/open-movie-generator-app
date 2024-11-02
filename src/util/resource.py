@@ -54,7 +54,7 @@ class ResourceManager:
         self.woman_character_image_file_paths = [
             character_image_file_path
             for character_image_file_path in self.character_image_file_paths
-            if "__woman__" in character_image_file_path
+            if "_woman_" in character_image_file_path
         ]
         if len(self.woman_character_image_file_paths) == 0:
             raise FileNotFoundError(
@@ -63,11 +63,11 @@ class ResourceManager:
         self.man_character_image_file_paths = [
             character_image_file_path
             for character_image_file_path in self.character_image_file_paths
-            if "__man__" in character_image_file_path
+            if "_man_" in character_image_file_path
         ]
         if len(self.man_character_image_file_paths) == 0:
             raise FileNotFoundError(
-                f"次のディレクトリ内に男性の画像が見つかりません。なお、男性画像のファイル名には__man__を含めてください: {character_image_dir}"
+                f"次のディレクトリ内に男性の画像が見つかりません。なお、男性画像のファイル名には_man_を含めてください: {character_image_dir}"
             )
 
     def character_image_paths(self) -> List[str]:

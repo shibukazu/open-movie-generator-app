@@ -1,5 +1,5 @@
-from .bulletin_board_thumbnail_generator import (
-    BulletinBoardThumbnailGenerator as BulletinBoardThumbnailGenerator,
+from .bulletin_board_long_thumbnail_generator import (
+    BulletinBoardLongThumbnailGenerator as BulletinBoardLongThumbnailGenerator,
 )
 from .dalle_thumbnail_generator import (
     DalleThumbnailGenerator as DalleThumbnailGenerator,

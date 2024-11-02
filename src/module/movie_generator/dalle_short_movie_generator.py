@@ -28,19 +28,16 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class DalleShortMovieGenerator(IMovieGenerator):
-    def __init__(
-        self, id: str, openai_apikey: str, is_short: bool, logger: logging.Logger
-    ):
-        super().__init__(id, is_short=is_short, logger=logger)
-        if not self.is_short:
-            raise ValueError("DalleShortMovieGeneratorは短尺動画用です。")
+    def __init__(self, id: str, openai_apikey: str, logger: logging.Logger):
+        super().__init__(id, is_short=False, logger=logger)
         self.openai_client = OpenAI(api_key=openai_apikey)
         self.image_generator = ImageGenerator(
             openai_apikey=openai_apikey, logger=logger
         )
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
-        width = 1080
+        width, height = 1080, 1920
+        font_size = 50
 
         # 音声を順次結合し、それに合わせて動画を作成する
         video_clips = []
@@ -55,7 +52,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
         intro_duration = 3.0
         image_clip = (
             ImageClip(thumbnail_image_path)
-            .resize(height=1920)
+            .resize(height=height)
             .set_start(start_time)
             .set_duration(intro_duration)
         )
@@ -83,7 +80,6 @@ class DalleShortMovieGenerator(IMovieGenerator):
                     image_path=background_image_path,
                     image_size="1024x1024",
                 )
-                font_size = 50
                 wrapped_texts = wrap_text(content_transcript, width // font_size)
 
                 audio_clip = (
@@ -98,7 +94,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
                         TextClip(
                             content_transcript,
                             font=self.font_path,
-                            fontsize=50,
+                            fontsize=font_size,
                             color="black",
                         )
                         .set_position(("center", 1500))
@@ -113,7 +109,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
                             TextClip(
                                 subtext,
                                 font=self.font_path,
-                                fontsize=50,
+                                fontsize=font_size,
                                 color="black",
                             )
                             .set_start(start_time)
@@ -123,7 +119,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
                         subtitle_clips.append(subtitle_clip)
 
                 white_background_clip = (
-                    ColorClip(size=(1080, 1920), color=(255, 255, 255))
+                    ColorClip(size=(width, height), color=(255, 255, 255))
                     .set_start(start_time)
                     .set_duration(audio_duration)
                 )

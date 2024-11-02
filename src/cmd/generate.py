@@ -22,11 +22,11 @@ from module.manuscript_generator import (  # noqa: E402
 from module.movie_generator import (  # noqa: E402
     DalleShortMovieGenerator,
     IMovieGenerator,
-    IrasutoyaMovieGenerator,
+    IrasutoyaLongMovieGenerator,
     IrasutoyaShortMovieGenerator,
 )
 from module.thumbnail_generator import (  # noqa: E402
-    BulletinBoardThumbnailGenerator,
+    BulletinBoardLongThumbnailGenerator,
     DalleThumbnailGenerator,
     IThumbnailGenerator,
 )
@@ -63,24 +63,26 @@ def bulletin(
 
     audio_generator = VoiceVoxAudioGenerator(id=movie_id, logger=logger)
 
-    thumbnail_generator = BulletinBoardThumbnailGenerator(
-        id=movie_id, logger=logger, is_short=short
-    )
-
     if not short:
-        movie_generator = IrasutoyaMovieGenerator(
-            id=movie_id, is_short=short, logger=logger
+        thumbnail_generator = BulletinBoardLongThumbnailGenerator(
+            id=movie_id, logger=logger
         )
     else:
-        movie_generator = IrasutoyaShortMovieGenerator(
-            id=movie_id, is_short=short, logger=logger
+        thumbnail_generator = DalleThumbnailGenerator(
+            id=movie_id, openai_apikey=OPENAI_API_KEY, is_short=short, logger=logger
         )
+
+    if not short:
+        movie_generator = IrasutoyaLongMovieGenerator(id=movie_id, logger=logger)
+    else:
+        movie_generator = IrasutoyaShortMovieGenerator(id=movie_id, logger=logger)
 
     pipeline(
         manuscript_generator,
         audio_generator,
         thumbnail_generator,
         movie_generator,
+        movie_id,
         resume_step,
     )
 
@@ -112,24 +114,26 @@ def pseudo_bulletin(
 
     audio_generator = VoiceVoxAudioGenerator(id=movie_id, logger=logger)
 
-    thumbnail_generator = BulletinBoardThumbnailGenerator(
-        id=movie_id, logger=logger, is_short=short
-    )
-
     if not short:
-        movie_generator = IrasutoyaMovieGenerator(
-            id=movie_id, is_short=short, logger=logger
+        thumbnail_generator = BulletinBoardLongThumbnailGenerator(
+            id=movie_id, logger=logger
         )
     else:
-        movie_generator = IrasutoyaShortMovieGenerator(
-            id=movie_id, is_short=short, logger=logger
+        thumbnail_generator = DalleThumbnailGenerator(
+            id=movie_id, openai_apikey=OPENAI_API_KEY, is_short=short, logger=logger
         )
+
+    if not short:
+        movie_generator = IrasutoyaLongMovieGenerator(id=movie_id, logger=logger)
+    else:
+        movie_generator = IrasutoyaShortMovieGenerator(id=movie_id, logger=logger)
 
     pipeline(
         manuscript_generator,
         audio_generator,
         thumbnail_generator,
         movie_generator,
+        movie_id,
         resume_step,
     )
 
@@ -177,7 +181,7 @@ def trivia(
         raise NotImplementedError("Triviaの長尺動画は未実装です")
     else:
         movie_generator = DalleShortMovieGenerator(
-            id=movie_id, is_short=short, openai_apikey=OPENAI_API_KEY, logger=logger
+            id=movie_id, openai_apikey=OPENAI_API_KEY, logger=logger
         )
 
     pipeline(
@@ -185,6 +189,7 @@ def trivia(
         audio_generator,
         thumbnail_generator,
         movie_generator,
+        movie_id,
         resume_step,
     )
 
@@ -211,18 +216,33 @@ def pipeline(
     audio_generator: IAudioGenerator,
     thumbnail_generator: IThumbnailGenerator,
     movie_generator: IMovieGenerator,
+    movie_id: str,
     resume_step: str | None = None,
 ) -> None:
     if not resume_step or resume_step == "manuscript":
         logger.info("Step1: 原稿生成")
-        manuscript = manuscript_genetrator.generate()
+        try:
+            manuscript = manuscript_genetrator.generate()
+        except Exception as e:
+            logger.error(f"原稿生成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=manuscript"
+            )
+            raise e
     else:
         logger.info("⏭️ Skip: 原稿生成")
         manuscript = manuscript_genetrator.skip()
 
     if not resume_step or resume_step == "manuscript" or resume_step == "audio":
         logger.info("Step2: 音声合成")
-        audio = audio_generator.generate(manuscript)
+        try:
+            audio = audio_generator.generate(manuscript)
+        except Exception as e:
+            logger.error(f"音声合成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=audio"
+            )
+            raise e
     else:
         logger.info("⏭️ Skip: 音声合成")
         audio = audio_generator.skip()
@@ -234,7 +254,14 @@ def pipeline(
         or resume_step == "thumbnail"
     ):
         logger.info("Step3: サムネイル生成")
-        thumbnail_generator.generate(manuscript)
+        try:
+            thumbnail_generator.generate(manuscript)
+        except Exception as e:
+            logger.error(f"サムネイル生成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=thumbnail"
+            )
+            raise e
     else:
         logger.info("⏭️ Skip: サムネイル生成")
         thumbnail_generator.skip()
@@ -247,7 +274,14 @@ def pipeline(
         or resume_step == "movie"
     ):
         logger.info("Step4: 動画生成")
-        movie_generator.generate(manuscript, audio)
+        try:
+            movie_generator.generate(manuscript, audio)
+        except Exception as e:
+            logger.error(f"動画生成中にエラーが発生しました。 {e}")
+            logger.error(
+                f"次のオプションで再開できます: --resume-id={movie_id} --resume-step=movie"
+            )
+            raise e
     else:
         logger.info("⏭️ Skip: 動画生成")
 

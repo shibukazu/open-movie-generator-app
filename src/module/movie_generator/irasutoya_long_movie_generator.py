@@ -27,10 +27,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class IrasutoyaLongMovieGenerator(IMovieGenerator):
-    def __init__(self, id: str, is_short: bool, logger: logging.Logger):
-        super().__init__(id, is_short=is_short, logger=logger)
-        if self.is_short:
-            raise ValueError("IrasutoyaMovieGeneratorは長尺動画用です。")
+    def __init__(self, id: str, logger: logging.Logger):
+        super().__init__(id, is_short=True, logger=logger)
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
         width, height = 1920, 1080
@@ -96,7 +94,7 @@ class IrasutoyaLongMovieGenerator(IMovieGenerator):
                             self.resource_manager.random_woman_character_image_path()
                         )
 
-            wrapped_texts = wrap_text(content_detail.transcript, width // font_size)
+            wrapped_texts = wrap_text(content_detail.transcript, width // font_size - 2)
             prev_speaker_image_path = speaker_image_path
             prev_speaker_id = content_detail.speaker_id
             with wave.open(content_wav_file_path, "rb") as wav:
@@ -128,7 +126,7 @@ class IrasutoyaLongMovieGenerator(IMovieGenerator):
                             TextClip(
                                 text,
                                 font=self.font_path,
-                                fontsize=50,
+                                fontsize=font_size,
                                 color="black",
                             )
                             .set_start(start_time)
