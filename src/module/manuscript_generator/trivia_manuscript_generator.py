@@ -32,7 +32,7 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
             messages=[
                 {
                     "role": "system",
-                    "content": f"{','.join(self.themes)}に関する誰も知らないようなトリビアを{self.num_trivia}個生成してください。",
+                    "content": f"{','.join(self.themes)}に関する誰も知らないようなトリビアを{self.num_trivia}個生成してください。できる限り信ぴょう性の高いものを検索に基づいて生成してください。",
                 },
                 {
                     "role": "system",
@@ -45,6 +45,10 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
                 {
                     "role": "system",
                     "content": "また、各トリビアは50文字以内としてください。",
+                },
+                {
+                    "role": "system",
+                    "content": "また、各トリビアは個人や会社などの特定の団体を中傷する内容や嘘を含んではいけません。",
                 },
             ],
             response_format=Manuscript,

@@ -12,6 +12,6 @@ themes=$(jq -r '.themes[:5][]' "$json_file")
 
 for theme in $themes; do
     echo "Processing theme: $theme"
-    uv run src/cmd/main.py generate trivia $theme 
+    uv run src/cmd/main.py generate trivia $theme --short --num-trivia=10
     jq --arg theme "$theme" 'del(.themes[] | select(. == $theme))' "$json_file" > tmp.json && mv tmp.json "$json_file"
 done

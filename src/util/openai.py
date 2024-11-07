@@ -29,7 +29,7 @@ class ImageGenerator:
             messages=[
                 {
                     "role": "system",
-                    "content": "OpenAI Usage policiesを参照して、Policyに抵触しないキーワードを抽出してください。例えば個人名や不適切な単語が抵触するキーワードです。",
+                    "content": "OpenAI Usage policiesを参照して、Dall-Eを用いて画像生成をする上でPolicyに抵触するようなキーワードは、類似する抽象的な別のキーワードに置き換えてください。例えば個人名や不適切な単語、個別の具体的な作品名が抵触するキーワードです。",
                 },
                 {
                     "role": "user",
@@ -53,7 +53,7 @@ class ImageGenerator:
                 },
                 {
                     "role": "system",
-                    "content": "また、OpenAI Usage policiesを参照して、Policyに触れるようなキーワードは除外してください。例えば個人名や危険な単語などです。",
+                    "content": "OpenAI Usage policiesを参照して、Dall-Eを用いて画像生成をする上でPolicyに抵触するようなキーワードは、類似する抽象的な別のキーワードに置き換えてください。例えば個人名や不適切な単語、個別の具体的な作品名が抵触するキーワードです。",
                 },
                 {
                     "role": "user",

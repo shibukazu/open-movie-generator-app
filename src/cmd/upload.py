@@ -176,6 +176,7 @@ def bulk(
             title=manuscript.title,
             overview=manuscript.overview,
             original_title=manuscript.meta.get("thread_title", ""),
+            keywords=manuscript.keywords,
         )
 
         request_body = {

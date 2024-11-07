@@ -93,7 +93,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
             with wave.open(content_wav_file_path, "rb") as wav:
                 audio_duration = round(wav.getnframes() / wav.getframerate(), 2)
                 # Shortsの制約に基づき60s以内の動画を生成する
-                if start_time + audio_duration > 60:
+                if start_time + audio_duration >= 60:
                     break
                 audio_clip = (
                     AudioFileClip(content_wav_file_path)
