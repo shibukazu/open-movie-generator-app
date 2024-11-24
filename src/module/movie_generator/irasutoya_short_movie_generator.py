@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+import random
 import sys
 import wave
 
@@ -24,12 +25,44 @@ sys.path.append(parent_dir)
 
 from util import wrap_text  # noqa: E402
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 class IrasutoyaShortMovieGenerator(IMovieGenerator):
-    def __init__(self, id: str, logger: logging.Logger):
-        super().__init__(id, is_short=False, logger=logger)
+    def __init__(
+        self,
+        id: str,
+        logger: logging.Logger,
+        font_path: str,
+        output_dir: str,
+        man_image_dir: str,
+        woman_image_dir: str,
+        bgm_file_path: str,
+        bgv_file_path: str,
+    ):
+        super().__init__(
+            id,
+            is_short=False,
+            logger=logger,
+            font_path=font_path,
+            output_dir=output_dir,
+        )
+        self.man_image_file_paths = [
+            os.path.join(man_image_dir, f)
+            for f in os.listdir(man_image_dir)
+            if os.path.isfile(os.path.join(man_image_dir, f))
+        ]
+        self.woman_image_file_paths = [
+            os.path.join(woman_image_dir, f)
+            for f in os.listdir(woman_image_dir)
+            if os.path.isfile(os.path.join(woman_image_dir, f))
+        ]
+        self.bgm_file_path = bgm_file_path
+        self.bgv_file_path = bgv_file_path
+
+    def get_random_woman_image_file_path(self) -> str:
+        return random.choice(self.woman_image_file_paths)
+
+    def get_random_man_image_file_path(self) -> str:
+        return random.choice(self.man_image_file_paths)
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
         width, height = 1080, 1920
@@ -41,24 +74,21 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
         start_time = 0.0
         total_duration = 0.0
         # irasutoya_movie_generatorでは始めにoverviewを紹介する
-        overview_detail = audio.overview_detail
-        overview_wav_file_path = overview_detail.wav_file_path
         thumbnail_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "thumbnail_original.png"
+            self.output_dir, self.id, "thumbnail_original.png"
         )
-        with wave.open(overview_wav_file_path, "rb") as wav:
-            audio_duration = 3.0
-            image_clip = (
-                ImageClip(thumbnail_image_path)
-                .resize(height=height)
-                .set_start(start_time)
-                .set_duration(audio_duration)
-            )
+        overview_duration = 3.0
+        image_clip = (
+            ImageClip(thumbnail_image_path)
+            .resize(height=height)
+            .set_start(start_time)
+            .set_duration(overview_duration)
+        )
 
-            video_clip = [image_clip]
-            video_clips += video_clip
-            start_time += audio_duration
-            total_duration += audio_duration
+        video_clip = [image_clip]
+        video_clips += video_clip
+        start_time += overview_duration
+        total_duration += overview_duration
 
         # 次にcontentsを紹介する
         prev_speaker_image_path = None
@@ -71,21 +101,13 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
                 speaker_image_path = prev_speaker_image_path
             else:
                 if content_detail.speaker_gender == "man":
-                    speaker_image_path = (
-                        self.resource_manager.random_man_character_image_path()
-                    )
+                    speaker_image_path = self.get_random_man_image_file_path()
                     while speaker_image_path == prev_speaker_image_path:
-                        speaker_image_path = (
-                            self.resource_manager.random_man_character_image_path()
-                        )
+                        speaker_image_path = self.get_random_man_image_file_path()
                 else:
-                    speaker_image_path = (
-                        self.resource_manager.random_woman_character_image_path()
-                    )
+                    speaker_image_path = self.get_random_woman_image_file_path()
                     while speaker_image_path == prev_speaker_image_path:
-                        speaker_image_path = (
-                            self.resource_manager.random_woman_character_image_path()
-                        )
+                        speaker_image_path = self.get_random_woman_image_file_path()
             wrapped_texts = wrap_text(content_detail.transcript, width // font_size - 2)
 
             prev_speaker_image_path = speaker_image_path
@@ -164,13 +186,13 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
 
         # BGV
         bgv_clip = (
-            VideoFileClip(self.resource_manager.random_bgv_path())
+            VideoFileClip(self.bgv_file_path)
             .resize((width, height))
             .loop(duration=total_duration)
         )
         # BGM
         bgm_clip = (
-            AudioFileClip(self.resource_manager.random_bgm_path())
+            AudioFileClip(self.bgm_file_path)
             .fx(audio_loop, duration=total_duration)
             .fx(volumex, 0.1)
         )
@@ -196,7 +218,5 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
         self.logger.info(
             f"いらすとやを用いた短尺動画を生成しました: {self.output_movie_path}"
         )
-
-        self.upload_manager.register(self.id)
 
         return

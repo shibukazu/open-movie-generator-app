@@ -7,8 +7,6 @@ from pydantic import BaseModel, Field
 
 from ..manuscript_generator import Manuscript
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 class Detail(BaseModel):
     wav_file_path: str = Field(description="音声ファイルのパス")
@@ -19,31 +17,16 @@ class Detail(BaseModel):
 
 
 class Audio(BaseModel):
-    overview_detail: Detail = Field(description="概要の音声詳細")
     content_details: List[Detail] = Field(description="音声の詳細")
 
 
 class IAudioGenerator(metaclass=abc.ABCMeta):
-    def __init__(self, id: str, logger: logging.Logger) -> None:
+    def __init__(self, id: str, logger: logging.Logger, output_dir: str) -> None:
         self.id = id
         self.logger = logger
-        self.dump_file_path = os.path.join(
-            current_dir, "../../../output", self.id, "audio.json"
-        )
-        self.audio_file_path = os.path.join(
-            current_dir, "../../../output", self.id, "audio.wav"
-        )
-        os.makedirs(os.path.dirname(self.dump_file_path), exist_ok=True)
-
-    def skip(self) -> Audio:
-        if not os.path.exists(self.dump_file_path):
-            raise FileNotFoundError(
-                f"音声合成のダンプファイルがありません。初めから実行し直してください: {self.dump_file_path}"
-            )
-        with open(self.dump_file_path, "r") as f:
-            dump = f.read()
-        audio = Audio.model_validate_json(dump)
-        return audio
+        self.output_dir = output_dir
+        self.audio_file_path = os.path.join(output_dir, self.id, "audio.wav")
+        os.makedirs(os.path.dirname(self.audio_file_path), exist_ok=True)
 
     @abc.abstractmethod
     def generate(self, manuscript: Manuscript) -> Audio:

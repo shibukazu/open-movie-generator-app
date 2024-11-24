@@ -1,9 +1,6 @@
 from .dalle_short_movie_generator import (
     DalleShortMovieGenerator as DalleShortMovieGenerator,
 )
-from .irasutoya_long_movie_generator import (
-    IrasutoyaLongMovieGenerator as IrasutoyaLongMovieGenerator,
-)
 from .irasutoya_short_movie_generator import (
     IrasutoyaShortMovieGenerator as IrasutoyaShortMovieGenerator,
 )

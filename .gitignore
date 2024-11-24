@@ -12,3 +12,6 @@ upload_manager.json
 source_manager.json
 theme_manager.json
 resource/
+build/
+dist/
+*.spec

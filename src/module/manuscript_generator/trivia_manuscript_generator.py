@@ -1,12 +1,9 @@
 import logging
-import os
 from typing import List
 
 from openai import OpenAI
 
 from .manuscript_generator import IManuscriptGenerator, Manuscript
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class TriviaManuscriptGenerator(IManuscriptGenerator):
@@ -62,10 +59,6 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
             "themes": self.themes,
         }
         self.logger.debug(manuscript)
-
-        dump = manuscript.model_dump_json()
-        with open(self.dump_file_path, "w") as f:
-            f.write(dump)
 
         self.logger.info("GPTによるトリビアに基づいた原稿を生成しました")
 

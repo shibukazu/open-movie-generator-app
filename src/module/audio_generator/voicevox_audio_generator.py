@@ -6,33 +6,7 @@ from ctypes import CDLL
 from pathlib import Path
 from typing import List, Literal, TypedDict
 
-from dotenv import load_dotenv
-
 from .audio_generator import Audio, Detail, IAudioGenerator, Manuscript
-
-load_dotenv()
-ONNXRUNTIME_LIB_PATH = os.getenv("ONNXRUNTIME_LIB_PATH")
-if not ONNXRUNTIME_LIB_PATH:
-    raise ValueError("ONNXRUNTIME_LIB_PATH is not set")
-OPEN_JTALK_DICT_DIR_PATH = os.getenv("OPEN_JTALK_DICT_DIR_PATH")
-if not OPEN_JTALK_DICT_DIR_PATH:
-    raise ValueError("OPEN_JTALK_DICT_DIR_PATH is not set")
-
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-CDLL(
-    str(
-        Path(
-            current_dir,
-            ONNXRUNTIME_LIB_PATH,
-        ).resolve(strict=True)
-    )
-)
-
-from voicevox_core import VoicevoxCore  # type: ignore  # noqa: E402
-
-vv_core = VoicevoxCore(open_jtalk_dict_dir=Path(current_dir, OPEN_JTALK_DICT_DIR_PATH))
 
 
 class SpeakerAttribute(TypedDict):
@@ -57,22 +31,28 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
         self,
         id: str,
         logger: logging.Logger,
-        overview_speaker_id: int | None = None,
+        output_dir: str,
+        onnxruntime_lib_path: str,
+        open_jtalk_dict_dir_path: str,
         content_speaker_id: int | None = None,
-        ending_speaker_id: int | None = None,
     ):
-        super().__init__(id, logger)
-        self.overview_speaker_id = overview_speaker_id
+        super().__init__(id, logger, output_dir)
         self.content_speaker_id = content_speaker_id
-        self.ending_speaker_id = ending_speaker_id
-        self.output_dir = os.path.join(current_dir, "../../../output", self.id, "audio")
-        os.makedirs(self.output_dir, exist_ok=True)
+        self.onnxruntime_lib_path = onnxruntime_lib_path
+        self.open_jtalk_dict_dir_path = open_jtalk_dict_dir_path
 
     def generate(self, manuscript: Manuscript) -> Audio:
-        if self.overview_speaker_id is not None:
-            overview_speaker_id = self.overview_speaker_id
-        else:
-            overview_speaker_id = 3  # 個人的な好みでずんだもんを選択
+        CDLL(
+            str(
+                Path(
+                    self.onnxruntime_lib_path,
+                ).resolve(strict=True)
+            )
+        )
+
+        from voicevox_core import VoicevoxCore  # type: ignore  # noqa: E402
+
+        vv_core = VoicevoxCore(open_jtalk_dict_dir=Path(self.open_jtalk_dict_dir_path))
 
         unique_user_ids = list(
             set([content.speaker_id for content in manuscript.contents])
@@ -98,32 +78,6 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
                 user_id: speaker_attributes[i % len(speaker_attributes)]
                 for i, user_id in enumerate(unique_user_ids)
             }
-
-        # Overviewの音声を生成
-        overview_output_audio_file_path = os.path.join(self.output_dir, "overview.wav")
-        os.remove(overview_output_audio_file_path) if os.path.exists(
-            overview_output_audio_file_path
-        ) else None
-
-        overview_speaker_id = 3  # ずんだもん
-        vv_core.load_model(overview_speaker_id)
-        overview_audio_query = vv_core.audio_query(
-            manuscript.overview, speaker_id=overview_speaker_id
-        )
-        overview_wav = vv_core.synthesis(overview_audio_query, overview_speaker_id)
-        with wave.open(overview_output_audio_file_path, "wb") as overview_output_wav:
-            with wave.open(io.BytesIO(overview_wav), "rb") as wav:
-                overview_output_wav.setnchannels(wav.getnchannels())
-                overview_output_wav.setsampwidth(wav.getsampwidth())
-                overview_output_wav.setframerate(wav.getframerate())
-                overview_output_wav.writeframes(wav.readframes(wav.getnframes()))
-        overview_detail = Detail(
-            wav_file_path=overview_output_audio_file_path,
-            transcript=manuscript.overview,
-            speaker_id=str(overview_speaker_id),
-            speaker_gender="woman",
-            tags=[],
-        )
 
         # コンテンツの音声を生成
         content_details: list[Detail] = []
@@ -169,14 +123,7 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
                     f"次のコンテンツの音声生成に失敗しました: {content.text}"
                 )
 
-            audio = Audio(
-                overview_detail=overview_detail, content_details=content_details
-            )
-
-            dump = audio.model_dump_json()
-
-            with open(self.dump_file_path, "w") as f:
-                f.write(dump)
+            audio = Audio(content_details=content_details)
 
         self.logger.info("VOICEVOXを用いた動画音声を生成しました")
 

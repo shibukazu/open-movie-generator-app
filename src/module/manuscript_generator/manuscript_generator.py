@@ -1,10 +1,7 @@
 import abc
 import logging
-import os
 
 from pydantic import BaseModel, Field
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class Content(BaseModel):
@@ -27,20 +24,6 @@ class IManuscriptGenerator(metaclass=abc.ABCMeta):
     def __init__(self, id: str, logger: logging.Logger) -> None:
         self.id = id
         self.logger = logger
-        self.dump_file_path = os.path.join(
-            current_dir, "../../../output", self.id, "manuscript.json"
-        )
-        os.makedirs(os.path.dirname(self.dump_file_path), exist_ok=True)
-
-    def skip(self) -> Manuscript:
-        if not os.path.exists(self.dump_file_path):
-            raise FileNotFoundError(
-                f"原稿生成のダンプファイルがありません。初めから実行し直してください: {self.dump_file_path}"
-            )
-        with open(self.dump_file_path, "r") as f:
-            dump = f.read()
-        manuscript = Manuscript.model_validate_json(dump)
-        return manuscript
 
     @abc.abstractmethod
     def generate(self) -> Manuscript:

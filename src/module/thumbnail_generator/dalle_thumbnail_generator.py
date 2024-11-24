@@ -12,14 +12,17 @@ sys.path.append(parent_dir)
 
 from util import ImageGenerator, wrap_text  # noqa: E402
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 class DalleThumbnailGenerator(IThumbnailGenerator):
     def __init__(
-        self, id: str, openai_apikey: str, is_short: bool, logger: logging.Logger
+        self,
+        id: str,
+        openai_apikey: str,
+        logger: logging.Logger,
+        font_path: str,
+        output_dir: str,
     ) -> None:
-        super().__init__(id, is_short, logger)
+        super().__init__(id, logger=logger, font_path=font_path, output_dir=output_dir)
         try:
             self.openai_client = OpenAI(api_key=openai_apikey)
         except ValueError as e:
@@ -29,26 +32,16 @@ class DalleThumbnailGenerator(IThumbnailGenerator):
         )
 
     def generate(self, manuscript: Manuscript) -> None:
-        width: int
-        height: int
-        if self.is_short:
-            width, height = 1080, 1920
-        else:
-            width, height = 1920, 1080
+        width, height = 1080, 1920
 
-        background_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "original_background.png"
-        )
+        background_image_path = os.path.join(self.output_dir, "original_background.png")
         self.image_generator.generate_from_keywords(
             keywords=manuscript.keywords,
             image_path=background_image_path,
             image_size="1024x1024",
         )
         background = Image.open(background_image_path).convert("RGBA")
-        if self.is_short:
-            background = background.resize((1024, 1024))
-        else:
-            background = background.resize((720, 720))
+        background = background.resize((1024, 1024))
 
         canvas = Image.new("RGBA", (width, height), (255, 255, 255, 255))
         x_offset = (width - background.width) // 2

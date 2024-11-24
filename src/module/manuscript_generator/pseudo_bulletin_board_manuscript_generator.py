@@ -1,13 +1,9 @@
 import logging
-import os
 from typing import List
 
 from openai import OpenAI
 
 from .manuscript_generator import Content, IManuscriptGenerator, Manuscript
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 EXAMPLE_MANUSCRIPT = Manuscript(
     title="【爆笑】ウブすぎるイッチの美容院初体験",
@@ -95,10 +91,6 @@ class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
             "themes": self.themes,
         }
         self.logger.debug(manuscript)
-
-        dump = manuscript.model_dump_json()
-        with open(self.dump_file_path, "w") as f:
-            f.write(dump)
 
         self.logger.info("GPTによる擬似掲示板に基づいた原稿を生成しました")
 

@@ -24,16 +24,29 @@ sys.path.append(parent_dir)
 
 from util import ImageGenerator, wrap_text  # noqa: E402
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 class DalleShortMovieGenerator(IMovieGenerator):
-    def __init__(self, id: str, openai_apikey: str, logger: logging.Logger):
-        super().__init__(id, is_short=False, logger=logger)
+    def __init__(
+        self,
+        id: str,
+        openai_apikey: str,
+        logger: logging.Logger,
+        bgm_file_path: str,
+        font_path: str,
+        output_dir: str,
+    ):
+        super().__init__(
+            id,
+            is_short=False,
+            logger=logger,
+            font_path=font_path,
+            output_dir=output_dir,
+        )
         self.openai_client = OpenAI(api_key=openai_apikey)
         self.image_generator = ImageGenerator(
             openai_apikey=openai_apikey, logger=logger
         )
+        self.bgm_file_path = bgm_file_path
 
     def generate(self, manuscript: Manuscript, audio: Audio) -> None:
         width, height = 1080, 1920
@@ -47,7 +60,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
 
         # trivia では最初にサムネイル画像を3s表示する
         thumbnail_image_path = os.path.join(
-            current_dir, "../../../output/", self.id, "thumbnail_original.png"
+            self.output_dir, self.id, "thumbnail_original.png"
         )
         intro_duration = 3.0
         image_clip = (
@@ -73,7 +86,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
                     break
                 # 内容にふさわしい画像を生成する
                 background_image_path = os.path.join(
-                    current_dir, "../../../output/", self.id, "movie", f"{idx}.png"
+                    self.output_dir, self.id, "movie", f"{idx}.png"
                 )
                 self.image_generator.generate_from_text(
                     text=content_transcript,
@@ -138,7 +151,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
 
         # BGM
         bgm_clip = (
-            AudioFileClip(self.resource_manager.random_bgm_path())
+            AudioFileClip(self.bgm_file_path)
             .fx(audio_loop, duration=total_duration)
             .fx(volumex, 0.1)
         )
@@ -164,7 +177,5 @@ class DalleShortMovieGenerator(IMovieGenerator):
         self.logger.info(
             f"Dall-Eを用いた短尺動画を生成しました: {self.output_movie_path}"
         )
-
-        self.upload_manager.register(self.id)
 
         return

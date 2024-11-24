@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-VOICEVOX_VERSION="0.15.5"
+VOICEVOX_VERSION="0.15.4"
 SCRIPT_DIR="$(cd "$(dirname "$0")"; pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.."; pwd)"
 OUTPUT_DIR="${ROOT_DIR}/lib"
@@ -76,29 +76,25 @@ url=$(voicevox_wheel_url "$os" "$arch" "$device")
 
 # 出力ディレクトリの設定
 mkdir -p "$OUTPUT_DIR"
-
-# uvのインストール（ルートディレクトリで実行）
-echo "uvのインストールを開始します..."
-(cd "$ROOT_DIR" && curl -LsSf https://astral.sh/uv/install.sh | sh)
-echo "uvのインストールが完了しました。"
-
-# Python依存関係のインストール（ルートディレクトリで実行）
-echo "Python依存関係のインストールを開始します..."
-(cd "$ROOT_DIR" && uv sync)
-echo "Python依存関係のインストールが完了しました。"
-
+echo "${OUTPUT_DIR}/$(basename "$url")"
 # VOICEVOX Python wheelのダウンロード実行
-echo "VOICEVOXのPython wheelをダウンロードし、${OUTPUT_DIR}に保存します..."
-echo "ダウンロードURL: $url"
-curl -sSL "$url" -o "#!/bin/bash$(basename "$url")"
-echo "VOICEVOXのPython wheelのダウンロードが完了しました。"
+if [[ -e "${OUTPUT_DIR}/$(basename "$url")" ]]; then
+  echo "VOICEVOXのPython wheelは既にダウンロードされています。"
+else
+  echo "VOICEVOXのPython wheelをダウンロードし、${OUTPUT_DIR}に保存します..."
+  echo "ダウンロードURL: $url"
+  curl -sSL "$url" -o "#!/bin/bash$(basename "$url")"
+  echo "VOICEVOXのPython wheelのダウンロードが完了しました。"
+fi
 
 # VOICEVOX依存関係のダウンロード実行
+if ls "${OUTPUT_DIR}/" | grep -q '^onnxruntime'; then
+  if ls "${OUTPUT_DIR}/" | grep -q '^open_jtalk_dic_utf_8'; then
+    echo "onnxruntimeおよびopen_jtalk_dic_utf_8の依存関係は既にダウンロードされています。"
+    exit 0
+  fi
+fi
+
 echo "VOICEVOXの依存関係をダウンロードし、${OUTPUT_DIR}に保存します..."
 (cd "$OUTPUT_DIR" && curl -sSfL https://github.com/VOICEVOX/voicevox_core/releases/latest/download/download.sh | bash -s)
 echo "VOICEVOXの依存関係のダウンロードが完了しました。"
-
-# Python wheelのダウンロード&インストール（ルートディレクトリで実行）
-echo "VOICEVOXのPython wheelファイルをインストールします..."
-(cd "$ROOT_DIR" && uv pip install "${OUTPUT_DIR}/$(basename "$url")")
-echo "インストールが完了しました。"
