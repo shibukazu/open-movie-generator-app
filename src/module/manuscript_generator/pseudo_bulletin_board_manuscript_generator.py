@@ -57,9 +57,9 @@ EXAMPLE_MANUSCRIPT = Manuscript(
 
 class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
     def __init__(
-        self, id: str, themes: List[str], openai_apikey: str, logger: logging.Logger
+        self, themes: List[str], openai_apikey: str, logger: logging.Logger
     ) -> None:
-        super().__init__(id, logger)
+        super().__init__(logger)
         self.themes = themes
         try:
             self.openai_client = OpenAI(api_key=openai_apikey)

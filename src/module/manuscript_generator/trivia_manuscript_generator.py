@@ -9,13 +9,12 @@ from .manuscript_generator import IManuscriptGenerator, Manuscript
 class TriviaManuscriptGenerator(IManuscriptGenerator):
     def __init__(
         self,
-        id: str,
         themes: List[str],
         num_trivia: int,
         openai_apikey: str,
         logger: logging.Logger,
     ) -> None:
-        super().__init__(id, logger)
+        super().__init__(logger)
         self.themes = themes
         self.num_trivia = num_trivia
         try:

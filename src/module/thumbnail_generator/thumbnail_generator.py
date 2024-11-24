@@ -12,19 +12,17 @@ sys.path.append(parent_dir)
 class IThumbnailGenerator(metaclass=abc.ABCMeta):
     def __init__(
         self,
-        id: str,
         logger: logging.Logger,
         font_path: str,
         output_dir: str,
     ) -> None:
-        self.id = id
         self.logger = logger
         self.font_path = font_path
         self.output_dir = output_dir
-        self.output_thumbnail_path = os.path.join(output_dir, self.id, "thumbnail.png")
+        self.output_thumbnail_path = os.path.join(output_dir, "thumbnail.png")
         os.makedirs(os.path.dirname(self.output_thumbnail_path), exist_ok=True)
         self.output_original_thumbnail_path = os.path.join(
-            output_dir, self.id, "thumbnail_original.png"
+            output_dir, "thumbnail_original.png"
         )
         os.makedirs(os.path.dirname(self.output_original_thumbnail_path), exist_ok=True)
 

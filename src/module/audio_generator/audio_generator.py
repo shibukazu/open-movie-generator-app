@@ -21,11 +21,10 @@ class Audio(BaseModel):
 
 
 class IAudioGenerator(metaclass=abc.ABCMeta):
-    def __init__(self, id: str, logger: logging.Logger, output_dir: str) -> None:
-        self.id = id
+    def __init__(self, logger: logging.Logger, output_dir: str) -> None:
         self.logger = logger
         self.output_dir = output_dir
-        self.audio_file_path = os.path.join(output_dir, self.id, "audio.wav")
+        self.audio_file_path = os.path.join(output_dir, "audio.wav")
         os.makedirs(os.path.dirname(self.audio_file_path), exist_ok=True)
 
     @abc.abstractmethod

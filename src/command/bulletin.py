@@ -23,7 +23,6 @@ from module.thumbnail_generator import (  # noqa: E402
 
 
 def bulletin_cmd(
-    task_id: str,
     themes: list[str],
     openai_api_key: str,
     output_dir: str,
@@ -45,13 +44,11 @@ def bulletin_cmd(
     logger.info(f"テーマ: {themes}")
 
     manuscript_generator = PseudoBulletinBoardManuscriptGenerator(
-        id=task_id,
         themes=themes,
         openai_apikey=openai_api_key,
         logger=logger,
     )
     audio_generator = VoiceVoxAudioGenerator(
-        id=task_id,
         logger=logger,
         output_dir=output_dir,
         onnxruntime_lib_path=onnxruntime_lib_path,
@@ -59,14 +56,12 @@ def bulletin_cmd(
     )
 
     thumbnail_generator = DalleThumbnailGenerator(
-        id=task_id,
         openai_apikey=openai_api_key,
         logger=logger,
         font_path=font_path,
         output_dir=output_dir,
     )
     movie_generator = IrasutoyaShortMovieGenerator(
-        id=task_id,
         logger=logger,
         font_path=font_path,
         output_dir=output_dir,

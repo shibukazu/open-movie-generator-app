@@ -29,7 +29,6 @@ from util import wrap_text  # noqa: E402
 class IrasutoyaShortMovieGenerator(IMovieGenerator):
     def __init__(
         self,
-        id: str,
         logger: logging.Logger,
         font_path: str,
         output_dir: str,
@@ -39,7 +38,6 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
         bgv_file_path: str,
     ):
         super().__init__(
-            id,
             is_short=False,
             logger=logger,
             font_path=font_path,
@@ -74,9 +72,7 @@ class IrasutoyaShortMovieGenerator(IMovieGenerator):
         start_time = 0.0
         total_duration = 0.0
         # irasutoya_movie_generatorでは始めにoverviewを紹介する
-        thumbnail_image_path = os.path.join(
-            self.output_dir, self.id, "thumbnail_original.png"
-        )
+        thumbnail_image_path = os.path.join(self.output_dir, "thumbnail_original.png")
         overview_duration = 3.0
         image_clip = (
             ImageClip(thumbnail_image_path)

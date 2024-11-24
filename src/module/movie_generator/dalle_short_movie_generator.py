@@ -28,7 +28,6 @@ from util import ImageGenerator, wrap_text  # noqa: E402
 class DalleShortMovieGenerator(IMovieGenerator):
     def __init__(
         self,
-        id: str,
         openai_apikey: str,
         logger: logging.Logger,
         bgm_file_path: str,
@@ -36,7 +35,6 @@ class DalleShortMovieGenerator(IMovieGenerator):
         output_dir: str,
     ):
         super().__init__(
-            id,
             is_short=False,
             logger=logger,
             font_path=font_path,
@@ -59,9 +57,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
         total_duration = 0.0
 
         # trivia では最初にサムネイル画像を3s表示する
-        thumbnail_image_path = os.path.join(
-            self.output_dir, self.id, "thumbnail_original.png"
-        )
+        thumbnail_image_path = os.path.join(self.output_dir, "thumbnail_original.png")
         intro_duration = 3.0
         image_clip = (
             ImageClip(thumbnail_image_path)
@@ -86,7 +82,7 @@ class DalleShortMovieGenerator(IMovieGenerator):
                     break
                 # 内容にふさわしい画像を生成する
                 background_image_path = os.path.join(
-                    self.output_dir, self.id, "movie", f"{idx}.png"
+                    self.output_dir, "movie", f"{idx}.png"
                 )
                 self.image_generator.generate_from_text(
                     text=content_transcript,

@@ -16,13 +16,12 @@ from util import ImageGenerator, wrap_text  # noqa: E402
 class DalleThumbnailGenerator(IThumbnailGenerator):
     def __init__(
         self,
-        id: str,
         openai_apikey: str,
         logger: logging.Logger,
         font_path: str,
         output_dir: str,
     ) -> None:
-        super().__init__(id, logger=logger, font_path=font_path, output_dir=output_dir)
+        super().__init__(logger=logger, font_path=font_path, output_dir=output_dir)
         try:
             self.openai_client = OpenAI(api_key=openai_apikey)
         except ValueError as e:

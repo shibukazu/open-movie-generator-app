@@ -29,14 +29,13 @@ speaker_attributes: List[SpeakerAttribute] = [
 class VoiceVoxAudioGenerator(IAudioGenerator):
     def __init__(
         self,
-        id: str,
         logger: logging.Logger,
         output_dir: str,
         onnxruntime_lib_path: str,
         open_jtalk_dict_dir_path: str,
         content_speaker_id: int | None = None,
     ):
-        super().__init__(id, logger, output_dir)
+        super().__init__(logger, output_dir)
         self.content_speaker_id = content_speaker_id
         self.onnxruntime_lib_path = onnxruntime_lib_path
         self.open_jtalk_dict_dir_path = open_jtalk_dict_dir_path
@@ -84,7 +83,10 @@ class VoiceVoxAudioGenerator(IAudioGenerator):
         for idx, content in enumerate(manuscript.contents):
             try:
                 content_output_audio_file_path = os.path.join(
-                    self.output_dir, f"{idx}.wav"
+                    self.output_dir, "audio", f"{idx}.wav"
+                )
+                os.makedirs(
+                    os.path.dirname(content_output_audio_file_path), exist_ok=True
                 )
                 os.remove(content_output_audio_file_path) if os.path.exists(
                     content_output_audio_file_path

@@ -23,7 +23,6 @@ from module.thumbnail_generator import (  # noqa: E402
 
 
 def trivia_cmd(
-    task_id: str,
     themes: list[str],
     num_trivia: int,
     openai_api_key: str,
@@ -31,6 +30,7 @@ def trivia_cmd(
     speaker_id: int,
     onnxruntime_lib_path: str,
     open_jtalk_dict_dir_path: str,
+    bgm_file_path: str,
     font_path: str,
     logger: Logger,
 ) -> tuple[
@@ -43,14 +43,12 @@ def trivia_cmd(
     logger.info(f"テーマ: {themes}")
 
     manuscript_generator = TriviaManuscriptGenerator(
-        id=task_id,
         themes=themes,
         num_trivia=num_trivia,
         openai_apikey=openai_api_key,
         logger=logger,
     )
     audio_generator = VoiceVoxAudioGenerator(
-        id=task_id,
         logger=logger,
         content_speaker_id=speaker_id,
         output_dir=output_dir,
@@ -59,18 +57,17 @@ def trivia_cmd(
     )
 
     thumbnail_generator = DalleThumbnailGenerator(
-        id=task_id,
         openai_apikey=openai_api_key,
         logger=logger,
         font_path=font_path,
         output_dir=output_dir,
     )
     movie_generator = DalleShortMovieGenerator(
-        id=task_id,
         openai_apikey=openai_api_key,
         logger=logger,
         font_path=font_path,
         output_dir=output_dir,
+        bgm_file_path=bgm_file_path,
     )
 
     return manuscript_generator, audio_generator, thumbnail_generator, movie_generator

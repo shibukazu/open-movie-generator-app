@@ -21,8 +21,7 @@ class Manuscript(BaseModel):
 
 
 class IManuscriptGenerator(metaclass=abc.ABCMeta):
-    def __init__(self, id: str, logger: logging.Logger) -> None:
-        self.id = id
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
 
     @abc.abstractmethod

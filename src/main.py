@@ -20,8 +20,11 @@ from module.movie_generator import (
 from module.thumbnail_generator import (
     IThumbnailGenerator,
 )
+from util.flet import file_picker_row
 
 logger = getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 SCRIPT_PATH = (
     os.path.join(os.getcwd(), "script/install.sh")
@@ -34,6 +37,21 @@ LIB_PATH = (
     if not hasattr(sys, "_MEIPASS")
     else os.path.join(sys._MEIPASS, "lib")
 )
+
+TMP_PATH = (
+    os.path.join(os.getcwd(), "tmp")
+    if not hasattr(sys, "_MEIPASS")
+    else os.path.join(sys._MEIPASS, "tmp")
+)
+
+FONTS = font_manager.findSystemFonts(fontpaths=None, fontext="ttf")
+FONT_MAP = {}
+for path in FONTS:
+    try:
+        font_name = font_manager.FontProperties(fname=path).get_name()
+        FONT_MAP[font_name] = path
+    except RuntimeError:
+        pass
 
 
 def run_shell_script(callback: Callable[[str], None]) -> None:
@@ -112,7 +130,7 @@ def install_wheel(callback: Callable[[str], None]) -> None:
 
 
 def main(page: ft.Page) -> None:
-    page.title = "Auto Movie Generator"
+    page.title = "Shoooorter"
     page.scroll = "adaptive"
 
     # ログ出力用
@@ -167,59 +185,51 @@ def app(page: ft.Page) -> ft.Stack:
         hint_text="OpenAIのAPIキーを入力してください",
         width=400,
     )
-    output_dir_path_input = ft.TextField(
-        label="出力先ディレクトリ",
-        hint_text="動画の出力先ディレクトリを入力してください",
-        width=400,
-    )
 
-    fonts = font_manager.findSystemFonts(fontpaths=None, fontext="ttf")
-    font_map = {}
-    for path in fonts:
-        try:
-            font_name = font_manager.FontProperties(fname=path).get_name()
-            font_map[font_name] = path
-        except RuntimeError as e:
-            print(f"フォント処理エラー: {path} をスキップします: {e}")
-    default_font = next(iter(font_map.keys()), "選択してください")
-    font_select = ft.Dropdown(
+    font_path_select = ft.Dropdown(
         label="フォントを選択",
-        options=[ft.dropdown.Option(font_name) for font_name in font_map.keys()],
-        value=default_font,
+        options=[ft.dropdown.Option(font_name) for font_name in FONT_MAP.keys()],
+        value="YuMincho" if "YuMincho" in FONT_MAP.keys() else None,
         width=400,
     )
 
-    bulletin_st = bulletin(
+    common_setting_column = ft.Column(
+        [
+            ft.Text("共通設定", size=24, weight="bold"),
+            openai_apikey_input,
+            font_path_select,
+        ],
+        spacing=10,
+        scroll="adaptive",
+    )
+
+    bulletin_setting_column = bulletin_setting(
         page=page,
-        openai_api_key=openai_apikey_input.value,
-        output_dir=output_dir_path_input.value,
+        openai_api_key_input=openai_apikey_input,
         onnxruntime_lib_path=get_onnxruntime_lib_path(),
         open_jtalk_dict_dir_path=get_open_jtalk_dict_dir_path(),
-        font_path=font_map[font_select.value],
+        font_path_select=font_path_select,
     )
 
-    def close_env_check_dialog(e: ft.ControlEvent) -> None:
-        page.close(env_check_dialog)
-
-    env_check_dialog = environment_check_dialog(
-        page, handle_close=close_env_check_dialog
+    environment_check_button = environment_check_dialog(
+        page,
     )
-
-    environment_check_button = ft.ElevatedButton(
-        text="環境チェック",
-        on_click=lambda e: page.open(env_check_dialog),
+    others_column = ft.Column(
+        [
+            ft.Text("その他設定", size=24, weight="bold"),
+            environment_check_button,
+        ],
+        spacing=10,
+        scroll="adaptive",
     )
 
     return ft.Column(
         [
-            ft.Text("Auto Movie Generator", size=30, weight="bold"),
+            common_setting_column,
             ft.Divider(),
-            openai_apikey_input,
-            output_dir_path_input,
-            font_select,
+            bulletin_setting_column,
             ft.Divider(),
-            bulletin_st,
-            environment_check_button,
+            others_column,
         ],
         spacing=10,
         scroll="adaptive",
@@ -227,85 +237,118 @@ def app(page: ft.Page) -> ft.Stack:
     )
 
 
-def bulletin(
+def bulletin_setting(
     page: ft.Page,
-    openai_api_key: str,
-    output_dir: str,
+    openai_api_key_input: ft.TextField,
     onnxruntime_lib_path: str,
     open_jtalk_dict_dir_path: str,
-    font_path: str,
-) -> ft.Stack:
+    font_path_select: ft.Dropdown,
+) -> ft.Column:
     # フォームの構成
     theme_input = ft.TextField(
         label="テーマ",
         hint_text="議論させたいテーマを入力してください",
         width=400,
     )
-    man_image_dir_input = ft.TextField(
-        label="男性画像ディレクトリ",
-        hint_text="男性画像ディレクトリを入力してください",
-        width=400,
+
+    man_image_dir_row, man_image_dir_item = file_picker_row(
+        page, is_directory=True, label="男性画像ディレクトリ:"
     )
-    woman_image_dir_input = ft.TextField(
-        label="女性画像ディレクトリ",
-        hint_text="女性画像ディレクトリを入力してください",
-        width=400,
+
+    woman_image_dir_row, woman_image_dir_item = file_picker_row(
+        page, is_directory=True, label="女性画像ディレクトリ:"
     )
-    bgm_file_path_input = ft.TextField(
-        label="BGMファイルパス",
-        hint_text="BGMファイルパスを入力してください",
-        width=400,
+
+    bgm_image_dir_row, bgm_image_dir_item = file_picker_row(
+        page, is_directory=False, label="BGMファイル:"
     )
-    bgv_file_path_input = ft.TextField(
-        label="背景動画ファイルパス",
-        hint_text="背景動画ファイルパスを入力してください",
-        width=400,
+
+    bgv_image_dir_row, bgv_image_dir_item = file_picker_row(
+        page, is_directory=False, label="背景動画ファイル:"
     )
+
+    error_message = ft.Text("", color="red")
+    page.snack_bar = ft.SnackBar(
+        content=error_message,
+    )
+    progress_bar = ft.ProgressBar(visible=False, width=400)
+    progress_bar_label = ft.Text(visible=False)
 
     def generate_video(e: ft.ControlEvent) -> None:
         try:
+            if not all(
+                [
+                    theme_input.value,
+                    openai_api_key_input.value,
+                    onnxruntime_lib_path,
+                    open_jtalk_dict_dir_path,
+                    man_image_dir_item.value,
+                    woman_image_dir_item.value,
+                    bgm_image_dir_item.value,
+                    bgv_image_dir_item.value,
+                    font_path_select.value,
+                ]
+            ):
+                raise ValueError("全ての項目を入力してください。")
+
             (
                 manuscript_genetrator,
                 audio_generator,
                 thumbnail_generator,
                 movie_generator,
             ) = bulletin_cmd(
-                task_id="task_id",
                 themes=[theme_input.value],
-                openai_api_key=openai_api_key,
-                output_dir=output_dir,
+                openai_api_key=openai_api_key_input.value,
+                output_dir=TMP_PATH,
                 onnxruntime_lib_path=onnxruntime_lib_path,
                 open_jtalk_dict_dir_path=open_jtalk_dict_dir_path,
-                man_image_dir=man_image_dir_input.value,
-                woman_image_dir=woman_image_dir_input.value,
-                bgm_file_path=bgm_file_path_input.value,
-                bgv_file_path=bgv_file_path_input.value,
-                font_path=font_path,
+                man_image_dir=man_image_dir_item.value,
+                woman_image_dir=woman_image_dir_item.value,
+                bgm_file_path=bgm_image_dir_item.value,
+                bgv_file_path=bgv_image_dir_item.value,
+                font_path=FONT_MAP[font_path_select.value],
                 logger=logger,
             )
             pipeline(
-                manuscript_genetrator,
-                audio_generator,
-                thumbnail_generator,
-                movie_generator,
+                page=page,
+                progress_bar=progress_bar,
+                progress_bar_label=progress_bar_label,
+                action_button=action_button,
+                error_message=error_message,
+                manuscript_genetrator=manuscript_genetrator,
+                audio_generator=audio_generator,
+                thumbnail_generator=thumbnail_generator,
+                movie_generator=movie_generator,
             )
-            ft.toast("動画生成が完了しました。")
-        except Exception as ex:
-            ft.toast(f"エラーが発生しました: {str(ex)}", duration=5000)
+        except Exception as e:
+            error_message.value = f"エラーが発生しました: {str(e)}"
+            page.snack_bar.open = True
+            page.update()
 
     action_button = ft.ElevatedButton(text="動画生成", on_click=generate_video)
 
     return ft.Column(
         [
-            ft.Text("掲示板風動画生成", size=24, weight="bold"),
-            ft.Divider(),
+            ft.Row(
+                [
+                    ft.Text("掲示板風動画生成", size=24, weight="bold"),
+                    action_button,
+                ],
+                alignment="spaceBetween",
+            ),
+            ft.Row(
+                [
+                    progress_bar_label,
+                    progress_bar,
+                ],
+                alignment="start",
+                spacing=5,
+            ),
             theme_input,
-            man_image_dir_input,
-            woman_image_dir_input,
-            bgm_file_path_input,
-            bgv_file_path_input,
-            ft.Divider(),
-            action_button,
+            man_image_dir_row,
+            woman_image_dir_row,
+            bgm_image_dir_row,
+            bgv_image_dir_row,
         ],
         spacing=10,
         scroll="adaptive",
@@ -329,8 +372,8 @@ def get_open_jtalk_dict_dir_path() -> str:
 
 
 def environment_check_dialog(
-    page: ft.Page, handle_close: Callable[[ft.ControlEvent], None]
-) -> ft.AlertDialog:
+    page: ft.Page,
+) -> ft.ElevatedButton:
     def is_voicevox_core_exist() -> bool:
         for path in os.listdir(LIB_PATH):
             if path.startswith("voicevox_core") and path.endswith(".whl"):
@@ -386,7 +429,8 @@ def environment_check_dialog(
             ),
         ]
     )
-    return ft.AlertDialog(
+
+    dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text("環境チェック"),
         content=content,
@@ -394,50 +438,101 @@ def environment_check_dialog(
         actions_alignment="end",
     )
 
+    button = ft.ElevatedButton(
+        text="環境チェック",
+        on_click=lambda e: page.open(dialog),
+    )
+
+    def handle_close(e: ft.ControlEvent) -> None:
+        page.close(dialog)
+
+    return button
+
 
 def pipeline(
+    page: ft.Page,
+    progress_bar: ft.ProgressBar,
+    progress_bar_label: ft.Text,
+    action_button: ft.ElevatedButton,
+    error_message: ft.Text,
     manuscript_genetrator: IManuscriptGenerator,
     audio_generator: IAudioGenerator,
     thumbnail_generator: IThumbnailGenerator,
     movie_generator: IMovieGenerator,
 ) -> None:
-    logger.info("Step1: 原稿生成")
     try:
-        manuscript = manuscript_genetrator.generate()
-    except Exception as e:
-        logger.error(f"原稿生成中にエラーが発生しました。 {e}")
-        raise e
+        progress_bar.visible = True
+        progress_bar.value = 0
+        progress_bar_label.visible = True
+        action_button.visible = False
+        page.update()
 
-    logger.info("Step2: 音声合成")
-    try:
-        audio = audio_generator.generate(manuscript)
-    except Exception as e:
-        logger.error(f"音声合成中にエラーが発生しました。 {e}")
-        raise e
+        logger.info("Step1: 原稿生成")
+        try:
+            progress_bar_label.value = "原稿生成中..."
+            page.update()
 
-    logger.info("Step3: サムネイル生成")
-    try:
-        thumbnail_generator.generate(manuscript)
-    except Exception as e:
-        logger.error(f"サムネイル生成中にエラーが発生しました。 {e}")
-        raise e
+            manuscript = manuscript_genetrator.generate()
 
-    logger.info("Step4: 動画生成")
-    try:
-        movie_generator.generate(manuscript, audio)
-    except Exception as e:
-        logger.error(f"動画生成中にエラーが発生しました。 {e}")
-        raise e
+            progress_bar.value = 0.25
+            page.update()
+        except Exception as e:
+            logger.error(f"原稿生成中にエラーが発生しました。 {e}")
+            raise Exception(f"原稿生成中にエラーが発生しました。 {e}")
 
-    logger.info("すべてのステップを正常に終了しました")
+        logger.info("Step2: 音声合成")
+        try:
+            progress_bar_label.value = "音声合成中..."
+            page.update()
+
+            audio = audio_generator.generate(manuscript)
+
+            progress_bar.value = 0.5
+            page.update()
+        except Exception as e:
+            logger.error(f"音声合成中にエラーが発生しました。 {e}")
+            raise Exception(f"音声合成中にエラーが発生しました。 {e}")
+
+        logger.info("Step3: サムネイル生成")
+        try:
+            progress_bar_label.value = "サムネイル生成中..."
+            page.update()
+
+            thumbnail_generator.generate(manuscript)
+
+            progress_bar.value = 0.75
+            page.update()
+        except Exception as e:
+            logger.error(f"サムネイル生成中にエラーが発生しました。 {e}")
+            raise Exception(f"サムネイル生成中にエラーが発生しました。 {e}")
+
+        logger.info("Step4: 動画生成")
+        try:
+            progress_bar_label.value = "動画生成中..."
+            page.update()
+
+            movie_generator.generate(manuscript, audio)
+
+            progress_bar.value = 1
+            page.update()
+        except Exception as e:
+            logger.error(f"動画生成中にエラーが発生しました。 {e}")
+            raise Exception(f"動画生成中にエラーが発生しました。 {e}")
+
+        logger.info("すべてのステップを正常に終了しました")
+        progress_bar.visible = False
+        progress_bar_label.visible = False
+        action_button.visible = True
+        page.update()
+
+    except Exception as e:
+        progress_bar.visible = False
+        progress_bar_label.visible = False
+        action_button.visible = True
+        error_message.value = f"エラーが発生しました。 {str(e)}"
+        page.snack_bar.open = True
+        page.update()
 
 
 if __name__ == "__main__":
     ft.app(target=main)
-
-
-def set_log_level(debug: bool) -> None:
-    if debug:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
