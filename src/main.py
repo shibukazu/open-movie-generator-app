@@ -38,11 +38,6 @@ LIB_PATH = (
     else os.path.join(sys._MEIPASS, "lib")
 )
 
-TMP_PATH = (
-    os.path.join(os.getcwd(), "tmp")
-    if not hasattr(sys, "_MEIPASS")
-    else os.path.join(sys._MEIPASS, "tmp")
-)
 
 FONTS = font_manager.findSystemFonts(fontpaths=None, fontext="ttf")
 FONT_MAP = {}
@@ -193,11 +188,16 @@ def app(page: ft.Page) -> ft.Stack:
         width=400,
     )
 
+    output_dir_row, output_dir_item = file_picker_row(
+        page, is_directory=True, label="出力先ディレクトリ:"
+    )
+
     common_setting_column = ft.Column(
         [
             ft.Text("共通設定", size=24, weight="bold"),
             openai_apikey_input,
             font_path_select,
+            output_dir_row,
         ],
         spacing=10,
         scroll="adaptive",
@@ -209,6 +209,7 @@ def app(page: ft.Page) -> ft.Stack:
         onnxruntime_lib_path=get_onnxruntime_lib_path(),
         open_jtalk_dict_dir_path=get_open_jtalk_dict_dir_path(),
         font_path_select=font_path_select,
+        output_dir_item=output_dir_item,
     )
 
     environment_check_button = environment_check_dialog(
@@ -242,6 +243,7 @@ def bulletin_setting(
     openai_api_key_input: ft.TextField,
     onnxruntime_lib_path: str,
     open_jtalk_dict_dir_path: str,
+    output_dir_item: ft.Text,
     font_path_select: ft.Dropdown,
 ) -> ft.Column:
     # フォームの構成
@@ -299,7 +301,7 @@ def bulletin_setting(
             ) = bulletin_cmd(
                 themes=[theme_input.value],
                 openai_api_key=openai_api_key_input.value,
-                output_dir=TMP_PATH,
+                output_dir=output_dir_item.value,
                 onnxruntime_lib_path=onnxruntime_lib_path,
                 open_jtalk_dict_dir_path=open_jtalk_dict_dir_path,
                 man_image_dir=man_image_dir_item.value,
