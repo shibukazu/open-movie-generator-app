@@ -7,6 +7,7 @@ from logging import getLogger
 from typing import Callable
 
 import flet as ft
+from matplotlib import font_manager
 
 from command.bulletin import bulletin_cmd
 from module.audio_generator import IAudioGenerator
@@ -156,79 +157,109 @@ def main(page: ft.Page) -> None:
     )
     page.add(start_button)
 
-    page.add(app())
+    page.add(app(page))
 
 
-def app() -> ft.Stack:
+def app(page: ft.Page) -> ft.Stack:
+    # 入力フォームの構成
     openai_apikey_input = ft.TextField(
         label="OpenAI APIキー",
         hint_text="OpenAIのAPIキーを入力してください",
+        width=400,
     )
     output_dir_path_input = ft.TextField(
         label="出力先ディレクトリ",
         hint_text="動画の出力先ディレクトリを入力してください",
-    )
-    onnxruntime_lib_path_input = ft.TextField(
-        label="ONNXRUNTIME lib path",
-    )
-    open_jtalk_dict_dir_path_input = ft.TextField(
-        label="OPENJTALK dict dir path",
-    )
-    font_path_input = ft.TextField(
-        label="Font path",
-    )
-    bulletin_st = bulletin(
-        openai_api_key=openai_apikey_input.value,
-        output_dir=output_dir_path_input.value,
-        onnxruntime_lib_path=onnxruntime_lib_path_input.value,
-        open_jtalk_dict_dir_path=open_jtalk_dict_dir_path_input.value,
-        font_path=font_path_input.value,
-    )
-    st = ft.Stack(
-        [
-            ft.Text(
-                "Auto Movie Generator",
-                size=40,
-                weight="bold",
-            ),
-            openai_apikey_input,
-            output_dir_path_input,
-            onnxruntime_lib_path_input,
-            open_jtalk_dict_dir_path_input,
-            font_path_input,
-            bulletin_st,
-        ]
+        width=400,
     )
 
-    return st
+    fonts = font_manager.findSystemFonts(fontpaths=None, fontext="ttf")
+    font_map = {}
+    for path in fonts:
+        try:
+            font_name = font_manager.FontProperties(fname=path).get_name()
+            font_map[font_name] = path
+        except RuntimeError as e:
+            print(f"フォント処理エラー: {path} をスキップします: {e}")
+    default_font = next(iter(font_map.keys()), "選択してください")
+    font_select = ft.Dropdown(
+        label="フォントを選択",
+        options=[ft.dropdown.Option(font_name) for font_name in font_map.keys()],
+        value=default_font,
+        width=400,
+    )
+
+    bulletin_st = bulletin(
+        page=page,
+        openai_api_key=openai_apikey_input.value,
+        output_dir=output_dir_path_input.value,
+        onnxruntime_lib_path=get_onnxruntime_lib_path(),
+        open_jtalk_dict_dir_path=get_open_jtalk_dict_dir_path(),
+        font_path=font_map[font_select.value],
+    )
+
+    def close_env_check_dialog(e: ft.ControlEvent) -> None:
+        page.close(env_check_dialog)
+
+    env_check_dialog = environment_check_dialog(
+        page, handle_close=close_env_check_dialog
+    )
+
+    environment_check_button = ft.ElevatedButton(
+        text="環境チェック",
+        on_click=lambda e: page.open(env_check_dialog),
+    )
+
+    return ft.Column(
+        [
+            ft.Text("Auto Movie Generator", size=30, weight="bold"),
+            ft.Divider(),
+            openai_apikey_input,
+            output_dir_path_input,
+            font_select,
+            ft.Divider(),
+            bulletin_st,
+            environment_check_button,
+        ],
+        spacing=10,
+        scroll="adaptive",
+        expand=True,
+    )
 
 
 def bulletin(
+    page: ft.Page,
     openai_api_key: str,
     output_dir: str,
     onnxruntime_lib_path: str,
     open_jtalk_dict_dir_path: str,
     font_path: str,
 ) -> ft.Stack:
-    # TODO: 実際には複数のテーマに対応するが、GUI実装の都合上一つのみ受け入れる
+    # フォームの構成
     theme_input = ft.TextField(
         label="テーマ",
         hint_text="議論させたいテーマを入力してください",
+        width=400,
     )
     man_image_dir_input = ft.TextField(
         label="男性画像ディレクトリ",
         hint_text="男性画像ディレクトリを入力してください",
+        width=400,
     )
     woman_image_dir_input = ft.TextField(
         label="女性画像ディレクトリ",
         hint_text="女性画像ディレクトリを入力してください",
+        width=400,
     )
     bgm_file_path_input = ft.TextField(
         label="BGMファイルパス",
         hint_text="BGMファイルパスを入力してください",
+        width=400,
     )
     bgv_file_path_input = ft.TextField(
-        label="BGMファイルパス", hint_text="BGMファイルパスを入力してください"
+        label="背景動画ファイルパス",
+        hint_text="背景動画ファイルパスを入力してください",
+        width=400,
     )
 
     def generate_video(e: ft.ControlEvent) -> None:
@@ -262,26 +293,106 @@ def bulletin(
         except Exception as ex:
             ft.toast(f"エラーが発生しました: {str(ex)}", duration=5000)
 
-    action_button = ft.ElevatedButton(
-        text="動画生成",
-        on_click=generate_video,
-    )
+    action_button = ft.ElevatedButton(text="動画生成", on_click=generate_video)
 
-    st = ft.Stack(
+    return ft.Column(
         [
-            ft.Text(
-                "掲示板風動画生成",
-                size=30,
-                weight="bold",
-            ),
+            ft.Text("掲示板風動画生成", size=24, weight="bold"),
+            ft.Divider(),
             theme_input,
+            man_image_dir_input,
+            woman_image_dir_input,
+            bgm_file_path_input,
+            bgv_file_path_input,
+            ft.Divider(),
             action_button,
         ],
-        width=300,
-        height=300,
+        spacing=10,
+        scroll="adaptive",
     )
 
-    return st
+
+def get_onnxruntime_lib_path() -> str:
+    for path in os.listdir(LIB_PATH):
+        if path.startswith("onnxruntime"):
+            full_path = os.path.join(LIB_PATH, path, "lib", "libonnxruntime.dylib")
+            if os.path.isfile(full_path):
+                return full_path
+    raise FileNotFoundError("ONNX Runtimeのライブラリが見つかりませんでした。")
+
+
+def get_open_jtalk_dict_dir_path() -> str:
+    for path in os.listdir(LIB_PATH):
+        if path.startswith("open_jtalk_dic_utf_8"):
+            return os.path.join(LIB_PATH, path)
+    raise FileNotFoundError("Open JTalkの辞書ディレクトリが見つかりませんでした。")
+
+
+def environment_check_dialog(
+    page: ft.Page, handle_close: Callable[[ft.ControlEvent], None]
+) -> ft.AlertDialog:
+    def is_voicevox_core_exist() -> bool:
+        for path in os.listdir(LIB_PATH):
+            if path.startswith("voicevox_core") and path.endswith(".whl"):
+                return True
+        return False
+
+    def is_onnxruntime_exist() -> bool:
+        for path in os.listdir(LIB_PATH):
+            if path.startswith("onnxruntime"):
+                full_path = os.path.join(LIB_PATH, path, "lib", "libonnxruntime.dylib")
+                if os.path.isfile(full_path):
+                    return True
+        return False
+
+    def is_openjtalk_exist() -> bool:
+        for path in os.listdir(LIB_PATH):
+            if path.startswith("open_jtalk_dic_utf_8"):
+                return True
+
+        return False
+
+    content = ft.Column(
+        [
+            ft.Row(
+                [
+                    ft.Text("VOICEVOX Coreのインストール状況: "),
+                    ft.Text(
+                        f"{'OK' if is_voicevox_core_exist() else 'NG'}",
+                        color="green" if is_voicevox_core_exist() else "red",
+                    ),
+                ],
+                alignment="spaceBetween",
+            ),
+            ft.Row(
+                [
+                    ft.Text("ONNX Runtimeのインストール状況: "),
+                    ft.Text(
+                        f"{'OK' if is_onnxruntime_exist() else 'NG'}",
+                        color="green" if is_onnxruntime_exist() else "red",
+                    ),
+                ],
+                alignment="spaceBetween",
+            ),
+            ft.Row(
+                [
+                    ft.Text("Open JTalkのインストール状況: "),
+                    ft.Text(
+                        f"{'OK' if is_openjtalk_exist() else 'NG'}",
+                        color="green" if is_openjtalk_exist() else "red",
+                    ),
+                ],
+                alignment="spaceBetween",
+            ),
+        ]
+    )
+    return ft.AlertDialog(
+        modal=True,
+        title=ft.Text("環境チェック"),
+        content=content,
+        actions=[ft.ElevatedButton("閉じる", on_click=lambda e: handle_close(e))],
+        actions_alignment="end",
+    )
 
 
 def pipeline(
