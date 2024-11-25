@@ -36,7 +36,7 @@ LIB_PATH = (
 )
 
 
-FONTS = font_manager.findSystemFonts(fontpaths=None, fontext="ttf")
+FONTS = font_manager.findSystemFonts(fontpaths=None, fontext="ttc")
 FONT_MAP = {}
 for path in FONTS:
     try:
@@ -62,8 +62,10 @@ def app(page: ft.Page) -> ft.Stack:
 
     font_path_select = ft.Dropdown(
         label="フォントを選択",
-        options=[ft.dropdown.Option(font_name) for font_name in FONT_MAP.keys()],
-        value="YuMincho" if "YuMincho" in FONT_MAP.keys() else None,
+        options=[
+            ft.dropdown.Option(font_name) for font_name in sorted(list(FONT_MAP.keys()))
+        ],
+        value=None,
         width=400,
     )
 
@@ -182,8 +184,8 @@ def bulletin_setting(
 
     def generate_video(e: ft.ControlEvent) -> None:
         try:
-            onnxruntime_lib_path = "/libonnxruntime.dylib"
-            open_jtalk_dict_dir_path = "/open_jtalk_dic_utf_8-1.11"
+            onnxruntime_lib_path = "assets/libonnxruntime.dylib"
+            open_jtalk_dict_dir_path = "assets/open_jtalk_dic_utf_8-1.11"
             if not all(
                 [
                     theme_input.value,

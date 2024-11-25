@@ -1,12 +1,20 @@
 import logging
 import os
+import stat
 import sys
 import wave
 from typing import List
 
-os.environ["IMAGEIO_FFMPEG_EXE"] = "/ffmpeg"
-from moviepy.audio.fx.all import audio_loop, volumex
-from moviepy.editor import (
+os.environ["IMAGEIO_FFMPEG_EXE"] = "assets/ffmpeg"
+os.chmod("assets/ffmpeg", stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+os.environ["IMAGEMAGICK_BINARY"] = "assets/magick"
+os.chmod(
+    "assets/magick",
+    stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR,
+)
+
+from moviepy.audio.fx.all import audio_loop, volumex  # noqa: E402
+from moviepy.editor import (  # noqa: E402
     AudioFileClip,
     ColorClip,
     CompositeAudioClip,
@@ -14,11 +22,11 @@ from moviepy.editor import (
     ImageClip,
     TextClip,
 )
-from openai import OpenAI
+from openai import OpenAI  # noqa: E402
 
-from ..audio_generator import Audio
-from ..manuscript_generator import Manuscript
-from .movie_generator import IMovieGenerator
+from ..audio_generator import Audio  # noqa: E402
+from ..manuscript_generator import Manuscript  # noqa: E402
+from .movie_generator import IMovieGenerator  # noqa: E402
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
