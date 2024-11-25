@@ -18,15 +18,6 @@ from src.module.thumbnail_generator import (
     IThumbnailGenerator,
 )
 from src.util.flet import file_picker_row
-from src.util.setup import (
-    check_is_downloaded_voicevox_dependencies,
-    check_is_installed_ffmpeg,
-    check_is_installed_voicevox_wheel,
-    download_and_install_voicevox_wheel,
-    download_voicevox_dependencies,
-    get_onnxruntime_lib_path,
-    get_open_jtalk_dict_dir_path,
-)
 
 logger = getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -63,12 +54,6 @@ def main(page: ft.Page) -> None:
 
 
 def app(page: ft.Page) -> ft.Stack:
-    environment_check_button = environment_check_dialog(
-        page,
-    )
-
-    setting_row = ft.Row([environment_check_button], alignment="end")
-
     openai_apikey_input = ft.TextField(
         label="OpenAI APIキー",
         hint_text="OpenAIのAPIキーを入力してください",
@@ -108,7 +93,6 @@ def app(page: ft.Page) -> ft.Stack:
 
     return ft.Column(
         [
-            setting_row,
             common_setting_column,
             ft.Divider(),
             bulletin_setting_column,
@@ -198,8 +182,8 @@ def bulletin_setting(
 
     def generate_video(e: ft.ControlEvent) -> None:
         try:
-            onnxruntime_lib_path = get_onnxruntime_lib_path(LIB_PATH)
-            open_jtalk_dict_dir_path = get_open_jtalk_dict_dir_path(LIB_PATH)
+            onnxruntime_lib_path = "/libonnxruntime.dylib"
+            open_jtalk_dict_dir_path = "/open_jtalk_dic_utf_8-1.11"
             if not all(
                 [
                     theme_input.value,
@@ -277,154 +261,6 @@ def bulletin_setting(
         spacing=10,
         scroll="adaptive",
     )
-
-
-def environment_check_dialog(
-    page: ft.Page,
-) -> ft.ElevatedButton:
-    is_installed_voicevox_wheel = check_is_installed_voicevox_wheel()
-    voicevox_wheel_status = (
-        ft.Text("OK", color="green")
-        if is_installed_voicevox_wheel
-        else ft.Text("NG", color="red")
-    )
-
-    def handle_click_voicevox_wheel_download_button(e: ft.ControlEvent) -> None:
-        try:
-            voicevox_wheel_download_button.disabled = True
-            download_and_install_voicevox_wheel(logger, LIB_PATH)
-            voicevox_wheel_status.value = "OK"
-            voicevox_wheel_status.color = "green"
-        except Exception as e:
-            logger.error(f"VOICEVOX Wheelダウンロード中にエラーが発生しました。 {e}")
-            voicevox_wheel_status.value = "NG"
-            voicevox_wheel_status.color = "red"
-        finally:
-            voicevox_wheel_download_button.disabled = False
-            page.update()
-
-    voicevox_wheel_download_button = ft.ElevatedButton(
-        text="ダウンロード&チェック",
-        on_click=handle_click_voicevox_wheel_download_button,
-    )
-    voicevox_wheel_row = ft.Row(
-        [
-            ft.Text("VOICEVOX Wheelのインストール状況: "),
-            ft.Row(
-                [
-                    voicevox_wheel_status,
-                    voicevox_wheel_download_button,
-                ],
-                alignment="end",
-            ),
-        ],
-        alignment="spaceBetween",
-    )
-
-    is_downloaded_voicevox_dependencies = check_is_downloaded_voicevox_dependencies(
-        LIB_PATH
-    )
-    voicevox_dependencies_status = (
-        ft.Text("OK", color="green")
-        if is_downloaded_voicevox_dependencies
-        else ft.Text("NG", color="red")
-    )
-
-    def handle_click_voicevox_dependencies_download_button(e: ft.ControlEvent) -> None:
-        try:
-            voicevox_dependencies_download_button.disabled = True
-            download_voicevox_dependencies(logger, LIB_PATH)
-            voicevox_dependencies_status.value = "OK"
-            voicevox_dependencies_status.color = "green"
-        except Exception as e:
-            logger.error(
-                f"VOICEVOXの依存関係のダウンロード中にエラーが発生しました。 {e}"
-            )
-            voicevox_dependencies_status.value = "NG"
-            voicevox_dependencies_status.color = "red"
-        finally:
-            voicevox_dependencies_download_button.disabled = False
-            page.update()
-
-    voicevox_dependencies_download_button = ft.ElevatedButton(
-        text="ダウンロード&チェック",
-        on_click=handle_click_voicevox_dependencies_download_button,
-    )
-    voicevox_dependencies_row = ft.Row(
-        [
-            ft.Text("VOICEVOXの依存関係のインストール状況: "),
-            ft.Row(
-                [
-                    voicevox_dependencies_status,
-                    voicevox_dependencies_download_button,
-                ],
-                alignment="end",
-            ),
-        ],
-        alignment="spaceBetween",
-    )
-
-    is_installed_ffmpeg = check_is_installed_ffmpeg()
-    ffmpeg_status = (
-        ft.Text("OK", color="green")
-        if is_installed_ffmpeg
-        else ft.Text("NG", color="red")
-    )
-
-    def handle_click_ffmpeg_check_button(e: ft.ControlEvent) -> None:
-        ffmpeg_check_button.disabled = True
-        if check_is_installed_ffmpeg():
-            ffmpeg_status.value = "OK"
-            ffmpeg_status.color = "green"
-        else:
-            ffmpeg_status.value = "NG"
-            ffmpeg_status.color = "red"
-
-        ffmpeg_check_button.disabled = False
-        page.update()
-
-    ffmpeg_check_button = ft.ElevatedButton(
-        text="チェック", on_click=handle_click_ffmpeg_check_button
-    )
-    ffmpeg_row = ft.Row(
-        [
-            ft.Text("ffmpegのインストール状況: "),
-            ft.Row(
-                [
-                    ffmpeg_status,
-                    ffmpeg_check_button,
-                ],
-                alignment="end",
-            ),
-        ],
-        alignment="spaceBetween",
-    )
-
-    content = ft.Column(
-        [
-            voicevox_wheel_row,
-            voicevox_dependencies_row,
-            ffmpeg_row,
-        ]
-    )
-
-    dialog = ft.AlertDialog(
-        modal=True,
-        title=ft.Text("環境チェック"),
-        content=content,
-        actions=[ft.ElevatedButton("閉じる", on_click=lambda e: handle_close(e))],
-        actions_alignment="end",
-    )
-
-    button = ft.ElevatedButton(
-        text="環境チェック",
-        on_click=lambda e: page.open(dialog),
-    )
-
-    def handle_close(e: ft.ControlEvent) -> None:
-        page.close(dialog)
-
-    return button
 
 
 def pipeline(
@@ -512,4 +348,4 @@ def pipeline(
         page.update()
 
 
-ft.app(target=main)
+ft.app(target=main, assets_dir="assets")

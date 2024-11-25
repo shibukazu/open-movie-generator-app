@@ -5,6 +5,7 @@ import random
 import sys
 import wave
 
+os.environ["IMAGEIO_FFMPEG_EXE"] = "/ffmpeg"
 from moviepy.audio.fx.all import audio_loop, volumex
 from moviepy.editor import (
     AudioFileClip,

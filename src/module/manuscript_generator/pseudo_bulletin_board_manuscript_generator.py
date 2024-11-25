@@ -51,7 +51,6 @@ EXAMPLE_MANUSCRIPT = Manuscript(
             links=[],
         ),
     ],
-    meta=None,
 )
 
 
@@ -78,7 +77,12 @@ class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
                     "role": "system",
                     "content": "なお、会話は必ず30件以上生成してください。30件未満の場合は、会話を続けてください。",
                 },
-                {"role": "user", "content": EXAMPLE_MANUSCRIPT.model_dump_json()},
+                {
+                    "role": "user",
+                    "content": EXAMPLE_MANUSCRIPT.json(
+                        include={"title", "overview", "keywords", "contents"}
+                    ),
+                },
             ],
             response_format=Manuscript,
         )
@@ -86,10 +90,6 @@ class PseudoBulletinBoardManuscriptGenerator(IManuscriptGenerator):
         manuscript = completion.choices[0].message.parsed
         if not manuscript:
             raise Exception("GPT-4oによる文章生成に失敗しました。")
-        manuscript.meta = {
-            "type": "pseudo_bulletin_board",
-            "themes": self.themes,
-        }
         self.logger.debug(manuscript)
 
         self.logger.info("GPTによる擬似掲示板に基づいた原稿を生成しました")

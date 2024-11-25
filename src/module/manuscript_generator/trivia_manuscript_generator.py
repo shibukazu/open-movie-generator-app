@@ -53,10 +53,7 @@ class TriviaManuscriptGenerator(IManuscriptGenerator):
         manuscript = completion.choices[0].message.parsed
         if not manuscript:
             raise Exception("GPT-4oによる文章生成に失敗しました。")
-        manuscript.meta = {
-            "type": "trivia",
-            "themes": self.themes,
-        }
+
         self.logger.debug(manuscript)
 
         self.logger.info("GPTによるトリビアに基づいた原稿を生成しました")
