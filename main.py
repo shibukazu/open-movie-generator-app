@@ -18,6 +18,13 @@ from src.module.thumbnail_generator import (
     IThumbnailGenerator,
 )
 from src.util.flet import file_picker_row
+from src.util.license import (
+    FFMPEG_LICENSE,
+    IMAGEMAICK_LICENSE,
+    OPEN_JTALK_LICENSE,
+    SELF_SOURCE_CODE,
+    VOICEVOX_LICENSE,
+)
 
 logger = getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +61,8 @@ def main(page: ft.Page) -> None:
 
 
 def app(page: ft.Page) -> ft.Stack:
+    license_dialog_button = license_dialog(page)
+
     openai_apikey_input = ft.TextField(
         label="OpenAI APIキー",
         hint_text="OpenAIのAPIキーを入力してください",
@@ -95,6 +104,12 @@ def app(page: ft.Page) -> ft.Stack:
 
     return ft.Column(
         [
+            ft.Row(
+                [
+                    license_dialog_button,
+                ],
+                alignment="end",
+            ),
             common_setting_column,
             ft.Divider(),
             bulletin_setting_column,
@@ -263,6 +278,76 @@ def bulletin_setting(
         spacing=10,
         scroll="adaptive",
     )
+
+
+def license_dialog(
+    page: ft.Page,
+) -> ft.Column:
+    open_jtalk_license_column = ft.Column(
+        [
+            ft.Text("Open JTalk", size=24, weight="bold"),
+            ft.Text(OPEN_JTALK_LICENSE),
+        ],
+        spacing=5,
+    )
+    ffmpeg_license_column = ft.Column(
+        [
+            ft.Text("FFmpeg", size=24, weight="bold"),
+            ft.Text(FFMPEG_LICENSE),
+        ],
+        spacing=5,
+    )
+    imagemagick_license_column = ft.Column(
+        [
+            ft.Text("ImageMagick", size=24, weight="bold"),
+            ft.Text(IMAGEMAICK_LICENSE),
+        ],
+        spacing=5,
+    )
+    voicevox_license_column = ft.Column(
+        [
+            ft.Text("VOICEVOX", size=24, weight="bold"),
+            ft.Text(VOICEVOX_LICENSE),
+        ],
+        spacing=5,
+    )
+
+    self_source_code_column = ft.Column(
+        [
+            ft.Text("ソースコード", size=24, weight="bold"),
+            ft.Text(SELF_SOURCE_CODE),
+        ],
+        spacing=5,
+    )
+
+    content = ft.Column(
+        [
+            open_jtalk_license_column,
+            ffmpeg_license_column,
+            imagemagick_license_column,
+            voicevox_license_column,
+            self_source_code_column,
+        ]
+    )
+
+    dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("ライセンス"),
+        content=content,
+        actions=[ft.ElevatedButton("閉じる", on_click=lambda e: handle_close(e))],
+        actions_alignment="end",
+        scrollable=True,
+    )
+
+    button = ft.ElevatedButton(
+        text="ライセンス",
+        on_click=lambda e: page.open(dialog),
+    )
+
+    def handle_close(e: ft.ControlEvent) -> None:
+        page.close(dialog)
+
+    return button
 
 
 def pipeline(
