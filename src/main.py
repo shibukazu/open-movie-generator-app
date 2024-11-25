@@ -20,6 +20,7 @@ from module.thumbnail_generator import (
 from util.flet import file_picker_row
 from util.setup import (
     check_is_downloaded_voicevox_dependencies,
+    check_is_installed_ffmpeg,
     check_is_installed_voicevox_wheel,
     download_and_install_voicevox_wheel,
     download_voicevox_dependencies,
@@ -62,6 +63,12 @@ def main(page: ft.Page) -> None:
 
 
 def app(page: ft.Page) -> ft.Stack:
+    environment_check_button = environment_check_dialog(
+        page,
+    )
+
+    setting_row = ft.Row([environment_check_button], alignment="end")
+
     openai_apikey_input = ft.TextField(
         label="OpenAI APIキー",
         hint_text="OpenAIのAPIキーを入力してください",
@@ -97,27 +104,15 @@ def app(page: ft.Page) -> ft.Stack:
         output_dir_item=output_dir_item,
     )
 
-    environment_check_button = environment_check_dialog(
-        page,
-    )
-    others_column = ft.Column(
-        [
-            ft.Text("その他設定", size=24, weight="bold"),
-            environment_check_button,
-        ],
-        spacing=10,
-        scroll="adaptive",
-    )
-
     log_output_column = log_output(page)
 
     return ft.Column(
         [
+            setting_row,
             common_setting_column,
             ft.Divider(),
             bulletin_setting_column,
             ft.Divider(),
-            others_column,
             log_output_column,
         ],
         spacing=10,
@@ -308,7 +303,7 @@ def environment_check_dialog(
         page.update()
 
     voicevox_wheel_download_button = ft.ElevatedButton(
-        text="ダウンロード",
+        text="ダウンロード&チェック",
         on_click=handle_click_voicevox_wheel_download_button,
     )
     voicevox_wheel_row = ft.Row(
@@ -348,7 +343,7 @@ def environment_check_dialog(
         page.update()
 
     voicevox_dependencies_download_button = ft.ElevatedButton(
-        text="ダウンロード",
+        text="ダウンロード&チェック",
         on_click=handle_click_voicevox_dependencies_download_button,
     )
     voicevox_dependencies_row = ft.Row(
@@ -365,10 +360,45 @@ def environment_check_dialog(
         alignment="spaceBetween",
     )
 
+    is_installed_ffmpeg = check_is_installed_ffmpeg()
+    ffmpeg_status = (
+        ft.Text("OK", color="green")
+        if is_installed_ffmpeg
+        else ft.Text("NG", color="red")
+    )
+
+    def handle_click_ffmpeg_check_button(e: ft.ControlEvent) -> None:
+        if check_is_installed_ffmpeg():
+            ffmpeg_status.value = "OK"
+            ffmpeg_status.color = "green"
+        else:
+            ffmpeg_status.value = "NG"
+            ffmpeg_status.color = "red"
+
+        page.update()
+
+    ffmpeg_check_button = ft.ElevatedButton(
+        text="チェック", on_click=handle_click_ffmpeg_check_button
+    )
+    ffmpeg_row = ft.Row(
+        [
+            ft.Text("ffmpegのインストール状況: "),
+            ft.Row(
+                [
+                    ffmpeg_status,
+                    ffmpeg_check_button,
+                ],
+                alignment="end",
+            ),
+        ],
+        alignment="spaceBetween",
+    )
+
     content = ft.Column(
         [
             voicevox_wheel_row,
             voicevox_dependencies_row,
+            ffmpeg_row,
         ]
     )
 

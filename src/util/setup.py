@@ -144,6 +144,10 @@ def check_is_downloaded_voicevox_dependencies(
     return onnx_files_exist and open_jtalk_files_exist
 
 
+def check_is_installed_ffmpeg() -> bool:
+    return shutil.which("ffmpeg") is not None
+
+
 def download_voicevox_dependencies(
     logger: logging.Logger,
     output_dir: str,

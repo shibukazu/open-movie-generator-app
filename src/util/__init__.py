@@ -12,3 +12,4 @@ from .setup import (
     check_is_downloaded_voicevox_dependencies as check_is_downloaded_voicevox_dependencies,
 )
 from .setup import check_is_installed_voicevox_wheel as check_is_installed_voicevox_wheel
+from .setup import check_is_installed_ffmpeg as check_is_installed_ffmpeg
