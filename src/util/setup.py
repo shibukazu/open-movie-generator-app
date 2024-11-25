@@ -10,8 +10,6 @@ from pathlib import Path
 from typing import Literal
 
 VOICEVOX_VERSION = "0.15.4"
-ROOT_DIR = Path(__file__).resolve().parent.parent
-OUTPUT_DIR = ROOT_DIR / "lib"
 
 
 def detect_os() -> Literal["macos", "linux", "windows"]:
@@ -137,7 +135,10 @@ def download_and_install_voicevox_wheel(
 def check_is_downloaded_voicevox_dependencies(
     output_dir: str,
 ) -> bool:
-    onnx_files_exist = any(f.startswith("onnxruntime") for f in os.listdir(output_dir))
+    output_dir = os.path.join(output_dir, "voicevox_core")
+    onnx_files_exist = any(
+        f.startswith("libonnxruntime") for f in os.listdir(output_dir)
+    )
     open_jtalk_files_exist = any(
         f.startswith("open_jtalk_dic_utf_8") for f in os.listdir(output_dir)
     )
@@ -180,17 +181,18 @@ def download_voicevox_dependencies(
 def get_onnxruntime_lib_path(
     output_dir: str,
 ) -> str:
+    output_dir = os.path.join(output_dir, "voicevox_core")
     for path in os.listdir(output_dir):
-        if path.startswith("onnxruntime"):
-            full_path = os.path.join(output_dir, path, "lib", "libonnxruntime.dylib")
-            if os.path.isfile(full_path):
-                return full_path
+        if path.startswith("libonnxruntime"):
+            full_path = os.path.join(output_dir, path)
+            return full_path
     raise FileNotFoundError("ONNX Runtimeのライブラリが見つかりませんでした。")
 
 
 def get_open_jtalk_dict_dir_path(
     output_dir: str,
 ) -> str:
+    output_dir = os.path.join(output_dir, "voicevox_core")
     for path in os.listdir(output_dir):
         if path.startswith("open_jtalk_dic_utf_8"):
             return os.path.join(output_dir, path)

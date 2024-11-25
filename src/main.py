@@ -137,8 +137,6 @@ def log_output(page: ft.Page) -> ft.Column:
         value="",
         size=14,
         selectable=True,
-        color=ft.colors.with_opacity(0.87, "#ffffff"),
-        bgcolor=ft.colors.with_opacity(0.87, "#000000"),
         expand=True,
     )
     log_handler = FletLogHandler(log_output, page)
@@ -293,6 +291,7 @@ def environment_check_dialog(
 
     def handle_click_voicevox_wheel_download_button(e: ft.ControlEvent) -> None:
         try:
+            voicevox_wheel_download_button.disabled = True
             download_and_install_voicevox_wheel(logger, LIB_PATH)
             voicevox_wheel_status.value = "OK"
             voicevox_wheel_status.color = "green"
@@ -300,7 +299,9 @@ def environment_check_dialog(
             logger.error(f"VOICEVOX Wheelダウンロード中にエラーが発生しました。 {e}")
             voicevox_wheel_status.value = "NG"
             voicevox_wheel_status.color = "red"
-        page.update()
+        finally:
+            voicevox_wheel_download_button.disabled = False
+            page.update()
 
     voicevox_wheel_download_button = ft.ElevatedButton(
         text="ダウンロード&チェック",
@@ -331,6 +332,7 @@ def environment_check_dialog(
 
     def handle_click_voicevox_dependencies_download_button(e: ft.ControlEvent) -> None:
         try:
+            voicevox_dependencies_download_button.disabled = True
             download_voicevox_dependencies(logger, LIB_PATH)
             voicevox_dependencies_status.value = "OK"
             voicevox_dependencies_status.color = "green"
@@ -340,7 +342,9 @@ def environment_check_dialog(
             )
             voicevox_dependencies_status.value = "NG"
             voicevox_dependencies_status.color = "red"
-        page.update()
+        finally:
+            voicevox_dependencies_download_button.disabled = False
+            page.update()
 
     voicevox_dependencies_download_button = ft.ElevatedButton(
         text="ダウンロード&チェック",
@@ -368,6 +372,7 @@ def environment_check_dialog(
     )
 
     def handle_click_ffmpeg_check_button(e: ft.ControlEvent) -> None:
+        ffmpeg_check_button.disabled = True
         if check_is_installed_ffmpeg():
             ffmpeg_status.value = "OK"
             ffmpeg_status.color = "green"
@@ -375,6 +380,7 @@ def environment_check_dialog(
             ffmpeg_status.value = "NG"
             ffmpeg_status.color = "red"
 
+        ffmpeg_check_button.disabled = False
         page.update()
 
     ffmpeg_check_button = ft.ElevatedButton(
