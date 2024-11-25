@@ -1,10 +1,7 @@
 import logging
 import os
-import subprocess
 import sys
-import threading
 from logging import getLogger
-from typing import Callable
 
 import flet as ft
 from matplotlib import font_manager
@@ -21,10 +18,18 @@ from module.thumbnail_generator import (
     IThumbnailGenerator,
 )
 from util.flet import file_picker_row
+from util.setup import (
+    check_is_downloaded_voicevox_dependencies,
+    check_is_installed_voicevox_wheel,
+    download_and_install_voicevox_wheel,
+    download_voicevox_dependencies,
+    get_onnxruntime_lib_path,
+    get_open_jtalk_dict_dir_path,
+)
 
 logger = getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-logger.setLevel(logging.DEBUG)
+
 
 SCRIPT_PATH = (
     os.path.join(os.getcwd(), "script/install.sh")
@@ -49,132 +54,14 @@ for path in FONTS:
         pass
 
 
-def run_shell_script(callback: Callable[[str], None]) -> None:
-    """
-    シェルスクリプトを実行する。
-
-    Args:
-        callback: 実行状況を通知するためのログ出力関数。
-    """
-    if hasattr(sys, "_MEIPASS"):
-        script_path = os.path.join(sys._MEIPASS, "script/install.sh")
-    else:
-        script_path = os.path.join(os.getcwd(), "script/install.sh")
-
-    try:
-        callback("シェルスクリプトを実行しています...")
-        subprocess.check_call(["bash", script_path])
-        callback("シェルスクリプトの実行が完了しました。")
-    except subprocess.CalledProcessError as e:
-        callback(f"エラー: スクリプト実行中に問題が発生しました: {e}")
-        sys.exit(1)
-
-
-def is_wheel_installed(wheel_path: str, callback: Callable[[str], None]) -> bool:
-    """
-    Wheelファイルがすでにインストールされているか確認する。
-
-    Args:
-        wheel_path: 確認対象のWheelファイルのパス。
-        callback: 実行状況を通知するためのログ出力関数。
-
-    Returns:
-        bool: インストール済みの場合はTrue、未インストールの場合はFalse。
-    """
-    try:
-        # Wheelファイルの名前からパッケージ名を推定
-        package_name = os.path.basename(wheel_path).split("-")[0]
-        # pip showでパッケージの情報を取得
-        subprocess.check_output(
-            [sys.executable, "-m", "pip", "show", package_name],
-            stderr=subprocess.DEVNULL,
-        )
-        callback(f"Wheelファイル {package_name} はすでにインストールされています。")
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
-def install_wheel(callback: Callable[[str], None]) -> None:
-    """
-    ダウンロードしたwheelファイルをPython環境にインストールする。
-
-    Args:
-        callback: 実行状況を通知するためのログ出力関数。
-    """
-    if hasattr(sys, "_MEIPASS"):
-        wheel_dir = os.path.join(sys._MEIPASS, "lib")
-    else:
-        wheel_dir = os.path.join(os.getcwd(), "lib")
-
-    try:
-        for filename in os.listdir(wheel_dir):
-            if filename.endswith(".whl"):
-                wheel_path: str = os.path.join(wheel_dir, filename)
-                if is_wheel_installed(wheel_path, callback):
-                    continue  # すでにインストールされている場合はスキップ
-
-                callback(f"インストール中: {wheel_path}")
-                subprocess.check_call(
-                    [sys.executable, "-m", "pip", "install", "--verbose", wheel_path]
-                )
-                callback(f"インストール完了: {wheel_path}")
-    except Exception as e:
-        callback(f"エラー: Wheelインストール中に問題が発生しました: {e}")
-        sys.exit(1)
-
-
 def main(page: ft.Page) -> None:
     page.title = "Shoooorter"
     page.scroll = "adaptive"
-
-    # ログ出力用
-    log_output: ft.Text = ft.Text(
-        value="セットアップを開始します...", size=14, selectable=True
-    )
-    page.add(log_output)
-
-    def append_log(message: str) -> None:
-        """
-        ログメッセージをUIに追加する。
-
-        Args:
-            message: 追加するログメッセージ。
-        """
-        log_output.value += f"\n{message}"
-        page.update()
-
-    def setup() -> None:
-        """
-        セットアップ処理を実行する。
-        """
-        # シェルスクリプト実行
-        run_shell_script(append_log)
-        # Wheelインストール
-        install_wheel(append_log)
-        append_log("セットアップが完了しました！")
-
-    def on_start(e: ft.ControlEvent) -> None:
-        """
-        セットアップ開始ボタンがクリックされたときのイベントハンドラ。
-
-        Args:
-            e: ボタンのクリックイベント。
-        """
-        append_log("セットアップを開始しています...")
-        threading.Thread(target=setup).start()
-
-    # ボタンでセットアップ開始
-    start_button: ft.ElevatedButton = ft.ElevatedButton(
-        text="セットアップを開始", on_click=on_start
-    )
-    page.add(start_button)
 
     page.add(app(page))
 
 
 def app(page: ft.Page) -> ft.Stack:
-    # 入力フォームの構成
     openai_apikey_input = ft.TextField(
         label="OpenAI APIキー",
         hint_text="OpenAIのAPIキーを入力してください",
@@ -206,8 +93,6 @@ def app(page: ft.Page) -> ft.Stack:
     bulletin_setting_column = bulletin_setting(
         page=page,
         openai_api_key_input=openai_apikey_input,
-        onnxruntime_lib_path=get_onnxruntime_lib_path(),
-        open_jtalk_dict_dir_path=get_open_jtalk_dict_dir_path(),
         font_path_select=font_path_select,
         output_dir_item=output_dir_item,
     )
@@ -224,6 +109,8 @@ def app(page: ft.Page) -> ft.Stack:
         scroll="adaptive",
     )
 
+    log_output_column = log_output(page)
+
     return ft.Column(
         [
             common_setting_column,
@@ -231,6 +118,7 @@ def app(page: ft.Page) -> ft.Stack:
             bulletin_setting_column,
             ft.Divider(),
             others_column,
+            log_output_column,
         ],
         spacing=10,
         scroll="adaptive",
@@ -238,11 +126,50 @@ def app(page: ft.Page) -> ft.Stack:
     )
 
 
+def log_output(page: ft.Page) -> ft.Column:
+    class FletLogHandler(logging.Handler):
+        def __init__(self, log_output: ft.Text, page: ft.Page):
+            super().__init__()
+            self.log_output = log_output
+            self.page = page
+
+        def emit(self, record: logging.LogRecord) -> None:
+            log_entry = self.format(record)
+            self.log_output.value += f"\n{log_entry}"
+            self.page.update()
+
+    log_output = ft.Text(
+        value="",
+        size=14,
+        selectable=True,
+        color=ft.colors.with_opacity(0.87, "#ffffff"),
+        bgcolor=ft.colors.with_opacity(0.87, "#000000"),
+        expand=True,
+    )
+    log_handler = FletLogHandler(log_output, page)
+    logger.addHandler(log_handler)
+    log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    log_handler.setFormatter(log_formatter)
+    logger.addHandler(log_handler)
+
+    column = ft.Column(
+        [
+            ft.Text(
+                "ログ",
+                size=24,
+                weight="bold",
+            ),
+            log_output,
+        ],
+        expand=True,
+    )
+
+    return column
+
+
 def bulletin_setting(
     page: ft.Page,
     openai_api_key_input: ft.TextField,
-    onnxruntime_lib_path: str,
-    open_jtalk_dict_dir_path: str,
     output_dir_item: ft.Text,
     font_path_select: ft.Dropdown,
 ) -> ft.Column:
@@ -278,6 +205,8 @@ def bulletin_setting(
 
     def generate_video(e: ft.ControlEvent) -> None:
         try:
+            onnxruntime_lib_path = get_onnxruntime_lib_path(LIB_PATH)
+            open_jtalk_dict_dir_path = get_open_jtalk_dict_dir_path(LIB_PATH)
             if not all(
                 [
                     theme_input.value,
@@ -357,78 +286,89 @@ def bulletin_setting(
     )
 
 
-def get_onnxruntime_lib_path() -> str:
-    for path in os.listdir(LIB_PATH):
-        if path.startswith("onnxruntime"):
-            full_path = os.path.join(LIB_PATH, path, "lib", "libonnxruntime.dylib")
-            if os.path.isfile(full_path):
-                return full_path
-    raise FileNotFoundError("ONNX Runtimeのライブラリが見つかりませんでした。")
-
-
-def get_open_jtalk_dict_dir_path() -> str:
-    for path in os.listdir(LIB_PATH):
-        if path.startswith("open_jtalk_dic_utf_8"):
-            return os.path.join(LIB_PATH, path)
-    raise FileNotFoundError("Open JTalkの辞書ディレクトリが見つかりませんでした。")
-
-
 def environment_check_dialog(
     page: ft.Page,
 ) -> ft.ElevatedButton:
-    def is_voicevox_core_exist() -> bool:
-        for path in os.listdir(LIB_PATH):
-            if path.startswith("voicevox_core") and path.endswith(".whl"):
-                return True
-        return False
+    is_installed_voicevox_wheel = check_is_installed_voicevox_wheel()
+    voicevox_wheel_status = (
+        ft.Text("OK", color="green")
+        if is_installed_voicevox_wheel
+        else ft.Text("NG", color="red")
+    )
 
-    def is_onnxruntime_exist() -> bool:
-        for path in os.listdir(LIB_PATH):
-            if path.startswith("onnxruntime"):
-                full_path = os.path.join(LIB_PATH, path, "lib", "libonnxruntime.dylib")
-                if os.path.isfile(full_path):
-                    return True
-        return False
+    def handle_click_voicevox_wheel_download_button(e: ft.ControlEvent) -> None:
+        try:
+            download_and_install_voicevox_wheel(logger, LIB_PATH)
+            voicevox_wheel_status.value = "OK"
+            voicevox_wheel_status.color = "green"
+        except Exception as e:
+            logger.error(f"VOICEVOX Wheelダウンロード中にエラーが発生しました。 {e}")
+            voicevox_wheel_status.value = "NG"
+            voicevox_wheel_status.color = "red"
+        page.update()
 
-    def is_openjtalk_exist() -> bool:
-        for path in os.listdir(LIB_PATH):
-            if path.startswith("open_jtalk_dic_utf_8"):
-                return True
+    voicevox_wheel_download_button = ft.ElevatedButton(
+        text="ダウンロード",
+        on_click=handle_click_voicevox_wheel_download_button,
+    )
+    voicevox_wheel_row = ft.Row(
+        [
+            ft.Text("VOICEVOX Wheelのインストール状況: "),
+            ft.Row(
+                [
+                    voicevox_wheel_status,
+                    voicevox_wheel_download_button,
+                ],
+                alignment="end",
+            ),
+        ],
+        alignment="spaceBetween",
+    )
 
-        return False
+    is_downloaded_voicevox_dependencies = check_is_downloaded_voicevox_dependencies(
+        LIB_PATH
+    )
+    voicevox_dependencies_status = (
+        ft.Text("OK", color="green")
+        if is_downloaded_voicevox_dependencies
+        else ft.Text("NG", color="red")
+    )
+
+    def handle_click_voicevox_dependencies_download_button(e: ft.ControlEvent) -> None:
+        try:
+            download_voicevox_dependencies(logger, LIB_PATH)
+            voicevox_dependencies_status.value = "OK"
+            voicevox_dependencies_status.color = "green"
+        except Exception as e:
+            logger.error(
+                f"VOICEVOXの依存関係のダウンロード中にエラーが発生しました。 {e}"
+            )
+            voicevox_dependencies_status.value = "NG"
+            voicevox_dependencies_status.color = "red"
+        page.update()
+
+    voicevox_dependencies_download_button = ft.ElevatedButton(
+        text="ダウンロード",
+        on_click=handle_click_voicevox_dependencies_download_button,
+    )
+    voicevox_dependencies_row = ft.Row(
+        [
+            ft.Text("VOICEVOXの依存関係のインストール状況: "),
+            ft.Row(
+                [
+                    voicevox_dependencies_status,
+                    voicevox_dependencies_download_button,
+                ],
+                alignment="end",
+            ),
+        ],
+        alignment="spaceBetween",
+    )
 
     content = ft.Column(
         [
-            ft.Row(
-                [
-                    ft.Text("VOICEVOX Coreのインストール状況: "),
-                    ft.Text(
-                        f"{'OK' if is_voicevox_core_exist() else 'NG'}",
-                        color="green" if is_voicevox_core_exist() else "red",
-                    ),
-                ],
-                alignment="spaceBetween",
-            ),
-            ft.Row(
-                [
-                    ft.Text("ONNX Runtimeのインストール状況: "),
-                    ft.Text(
-                        f"{'OK' if is_onnxruntime_exist() else 'NG'}",
-                        color="green" if is_onnxruntime_exist() else "red",
-                    ),
-                ],
-                alignment="spaceBetween",
-            ),
-            ft.Row(
-                [
-                    ft.Text("Open JTalkのインストール状況: "),
-                    ft.Text(
-                        f"{'OK' if is_openjtalk_exist() else 'NG'}",
-                        color="green" if is_openjtalk_exist() else "red",
-                    ),
-                ],
-                alignment="spaceBetween",
-            ),
+            voicevox_wheel_row,
+            voicevox_dependencies_row,
         ]
     )
 
