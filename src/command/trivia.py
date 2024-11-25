@@ -39,7 +39,7 @@ def trivia_cmd(
     IThumbnailGenerator,
     IMovieGenerator,
 ]:
-    logger.info("GPTを用いた疑似掲示板から動画を生成します")
+    logger.info("雑学紹介動画を生成します")
     logger.info(f"テーマ: {themes}")
 
     manuscript_generator = TriviaManuscriptGenerator(
