@@ -136,6 +136,8 @@ def check_is_downloaded_voicevox_dependencies(
     output_dir: str,
 ) -> bool:
     output_dir = os.path.join(output_dir, "voicevox_core")
+    if not os.path.exists(output_dir):
+        return False
     onnx_files_exist = any(
         f.startswith("libonnxruntime") for f in os.listdir(output_dir)
     )

@@ -1,4 +1,9 @@
-# Shoooorter
+# A open-movie-generator-app Flet app
 
-Generate monetizable short movie automatically!
-Offer Flutter based Desktop Application!
+An example of a counter Flet app.
+
+To run the app:
+
+```
+flet run [app_directory]
+```

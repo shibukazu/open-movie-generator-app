@@ -6,19 +6,19 @@ from logging import getLogger
 import flet as ft
 from matplotlib import font_manager
 
-from command.bulletin import bulletin_cmd
-from module.audio_generator import IAudioGenerator
-from module.manuscript_generator import (
+from src.command.bulletin import bulletin_cmd
+from src.module.audio_generator import IAudioGenerator
+from src.module.manuscript_generator import (
     IManuscriptGenerator,
 )
-from module.movie_generator import (
+from src.module.movie_generator import (
     IMovieGenerator,
 )
-from module.thumbnail_generator import (
+from src.module.thumbnail_generator import (
     IThumbnailGenerator,
 )
-from util.flet import file_picker_row
-from util.setup import (
+from src.util.flet import file_picker_row
+from src.util.setup import (
     check_is_downloaded_voicevox_dependencies,
     check_is_installed_ffmpeg,
     check_is_installed_voicevox_wheel,
@@ -56,7 +56,7 @@ for path in FONTS:
 
 
 def main(page: ft.Page) -> None:
-    page.title = "Shoooorter"
+    page.title = "Shoorter"
     page.scroll = "adaptive"
 
     page.add(app(page))
@@ -512,5 +512,4 @@ def pipeline(
         page.update()
 
 
-if __name__ == "__main__":
-    ft.app(target=main)
+ft.app(target=main)
